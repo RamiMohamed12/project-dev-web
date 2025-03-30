@@ -1,195 +1,128 @@
 <?php
 
-require_once '../Model/company.php';
-require_once '../../config/config.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../Model/company.php';
 
-class CompanyController {
-    private $company;
-    private $feedback = ''; 
-    private $hasError = false;
-    private $csrf_token;
+$company = new Company($conn);
 
-    public function __construct($dbConnection) {
-        $this->company = new Company($dbConnection);
-        
-        // Initialize CSRF protection
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
-        
-        if (!isset($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        }
-        $this->csrf_token = $_SESSION['csrf_token'];
-    }
+// Handle form submissions
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
+    $action = $_POST['action'];
 
-    public function getCsrfToken() {
-        return $this->csrf_token;
-    }
+    if ($action == 'add') {
+        $name = isset($_POST['name']) ? htmlspecialchars(trim($_POST['name'])) : '';
+        $location = isset($_POST['location']) ? htmlspecialchars(trim($_POST['location'])) : '';
+        $description = isset($_POST['description']) ? htmlspecialchars(trim($_POST['description'])) : '';
+        $email = isset($_POST['email']) ? htmlspecialchars(trim($_POST['email'])) : '';
+        $phone = isset($_POST['phone']) ? htmlspecialchars(trim($_POST['phone'])) : '';
 
-    public function getFeedback() {
-        return $this->feedback;
-    }
-
-    public function hasError() {
-        return $this->hasError;
-    }
-
-    // Helper method for validation
-    private function validateCompanyData($name, $location, $email, $phone) {
-        // Validate required fields
-        if (empty($name) || empty($location)) {
-            $this->feedback = 'Please fill in the company name and location.';
-            $this->hasError = true;
-            return false;
-        }
-        
-        // Validate email if provided
-        if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->feedback = 'Please enter a valid email address.';
-            $this->hasError = true;
-            return false;
-        }
-        
-        // Validate phone if provided
-        if (!empty($phone) && !preg_match('/^[0-9+\-\s()]*$/', $phone)) {
-            $this->feedback = 'Please enter a valid phone number.';
-            $this->hasError = true;
-            return false;
-        }
-        
-        return true;
-    }
-
-    public function handleCreateRequest() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_company'])) {
-            // CSRF protection
-            if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $this->csrf_token) {
-                $this->feedback = 'Security validation failed. Please try again.';
-                $this->hasError = true;
-                return false;
-            }
-            
-            // Get inputs (no need to sanitize as model will do this)
-            $name = $_POST['name'] ?? '';
-            $location = $_POST['location'] ?? '';
-            $description = $_POST['description'] ?? '';
-            $email = $_POST['email'] ?? '';
-            $phone = $_POST['phone'] ?? '';
-
-            // Validate inputs based on business rules
-            if (!$this->validateCompanyData($name, $location, $email, $phone)) {
-                return false;
-            }
-
-            // Call the model (which handles sanitization)
-            $result = $this->company->create($name, $location, $description, $email, $phone);
-
-            if ($result) {
-                $this->feedback = "Company created successfully. Rows affected: $result";
-            } else {
-                $this->feedback = "Failed to create company. Error: " . $this->company->error;
-                $this->hasError = true;
-            }
-        }
-    }
-
-    public function handleReadRequest($id) {
-        // Validate ID
-        $id = filter_var($id, FILTER_VALIDATE_INT);
-        if ($id === false || $id < 1) {
-            $this->feedback = "Invalid company ID.";
-            $this->hasError = true;
-            return false;
+        // Validate phone number using regex
+        if (!preg_match('/^\d+$/', $phone)) {
+            echo "Error: Phone number must contain only numbers.";
+            exit();
         }
 
-        $result = $this->company->read($id);
-        if ($result === false) {
-            $this->feedback = "Failed to retrieve company. Error: " . $this->company->error;
-            $this->hasError = true;
+        if ($company->create($name, $location, $description, $email, $phone)) {
+            header("Location: " . $_SERVER['PHP_SELF']); // Redirect to the same page
+            exit();
+        } else {
+            echo "Error: Could not add company. " . $company->error;
         }
-        return $result;
-    }
+    } elseif ($action == 'delete') {
+        $id = (int) $_POST['id'];
 
-    public function handleUpdateRequest($id) {
-        // Validate ID first
-        $id = filter_var($id, FILTER_VALIDATE_INT);
-        if ($id === false || $id < 1) {
-            $this->feedback = "Invalid company ID.";
-            $this->hasError = true;
-            return false;
-        }
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_company'])) {
-            // CSRF protection
-            if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $this->csrf_token) {
-                $this->feedback = 'Security validation failed. Please try again.';
-                $this->hasError = true;
-                return false;
-            }
-            
-            // Get inputs
-            $name = $_POST['name'] ?? '';
-            $location = $_POST['location'] ?? '';
-            $description = $_POST['description'] ?? '';
-            $email = $_POST['email'] ?? '';
-            $phone = $_POST['phone'] ?? '';
-
-            // Validate inputs
-            if (!$this->validateCompanyData($name, $location, $email, $phone)) {
-                return false;
-            }
-
-            $result = $this->company->update($id, $name, $location, $description, $email, $phone);
-
-            if ($result) {
-                $this->feedback = "Company updated successfully. Rows affected: $result";
-            } else {
-                $this->feedback = "Failed to update company. Error: " . $this->company->error;
-                $this->hasError = true;
-            }
-        }
-        
-        // Get the company data for form pre-population
-        return $this->company->read($id);
-    }
-
-    public function handleDeleteRequest($id) {
-        // Validate ID
-        $id = filter_var($id, FILTER_VALIDATE_INT);
-        if ($id === false || $id < 1) {
-            $this->feedback = "Invalid company ID.";
-            $this->hasError = true;
-            return false;
-        }
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_company'])) {
-            // CSRF protection
-            if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $this->csrf_token) {
-                $this->feedback = 'Security validation failed. Please try again.';
-                $this->hasError = true;
-                return false;
-            }
-            
-            $result = $this->company->delete($id);
-            if ($result) {
-                $this->feedback = "Company deleted successfully. Rows affected: $result";
-            } else {
-                $this->feedback = "Failed to delete company. Error: " . $this->company->error;
-                $this->hasError = true;
-            }
+        if ($company->delete($id)) {
+            header("Location: " . $_SERVER['PHP_SELF']); // Redirect to the same page
+            exit();
+        } else {
+            echo "Error: Could not delete company. " . $company->error;
         }
     }
 }
 
-// Initialize the controller
-try {
-    if (!isset($conn)) {
-        throw new Exception("Database connection not initialized.");
-    }
-    $companyController = new CompanyController($conn);
-} catch (Exception $e) {
-    die("Error initializing controller: " . $e->getMessage());
-}
+// Fetch all companies to display in the table
+$companies = $company->readAll();
 
 ?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Companies</title>
+    <link rel="stylesheet" type="text/css" href="../View/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+    <div class="form-container">
+        <h2>Add Company</h2>
+        <form method="post" action="">
+            <input type="hidden" name="action" value="add">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" name="name" placeholder="Name" required>
+            </div>
+            <div class="form-group">
+                <label for="location">Location:</label>
+                <input type="text" name="location" placeholder="Location" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea name="description" placeholder="Description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" name="email" placeholder="Email" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="text" name="phone" placeholder="Phone" required>
+            </div>
+            <button type="submit">Add Company</button>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <h2>Company List</h2>
+        <table border="1" cellpadding="10" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Location</th>
+                    <th>Description</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($companies)): ?>
+                    <?php foreach ($companies as $company): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($company['id_company']) ?></td>
+                            <td><?= htmlspecialchars($company['name_company']) ?></td>
+                            <td><?= htmlspecialchars($company['location']) ?></td>
+                            <td><?= htmlspecialchars($company['description']) ?></td>
+                            <td><?= htmlspecialchars($company['email']) ?></td>
+                            <td><?= htmlspecialchars($company['phone_number']) ?></td>
+                            <td>
+                                <form method="post" action="" style="display: inline;">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="id" value="<?= $company['id_company'] ?>">
+                                    <button type="submit" onclick="return confirm('Are you sure you want to delete this company?');">Delete</button>
+                                </form>
+                                <a href="editCompany.php?id=<?= $company['id_company'] ?>">Edit</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="7">No companies found.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

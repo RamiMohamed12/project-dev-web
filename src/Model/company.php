@@ -1,7 +1,6 @@
 <?php
 
-require_once 'config/config.php';
-
+require_once __DIR__ . '/../../config/config.php'; 
 
 // this is a Model class for the company table inside the database
 class Company {
@@ -12,11 +11,11 @@ class Company {
     public function __construct($conn){
     
        $this->conn = $conn; 
-       $this->conn->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPITION);
+       $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     }
     public function sanitize($data){
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); 
+        return htmlspecialchars($data, ENT_QUOTES, 'UTF-8'); 
     }
     // this is a public method to create a company inside the table 
     public  function create($name, $location, $description,$email,$phone)
@@ -59,6 +58,20 @@ class Company {
             return false; // return false if there is an error
         }
     
+    }
+    
+    public function readAll() {
+
+        try { 
+            $sql = "SELECT * FROM company"; 
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC); // fetch all rows as an associative array
+        } catch (Exception $e) {
+            $this->error = 'Error: ' . $e->getMessage(); // set the error message
+            return false; // return false if there is an error
+        }
+        
     }
 
     // this is a public method to read all companies from the table
