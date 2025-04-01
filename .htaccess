@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Allow access to loginController.php
+    RewriteCond %{REQUEST_URI} !^/newproject/src/Controller/loginController\.php [NC]
+    
+    # Allow access to view files if referred from loginController
+    RewriteCond %{REQUEST_URI} ^/newproject/src/View/(admin|student|pilote)\.php [NC]
+    RewriteCond %{HTTP_REFERER} ^http://localhost/newproject/src/Controller/loginController\.php [NC]
+    RewriteRule ^ - [L]
+    
+    # Block direct access to all other files in View directory
+    RewriteCond %{REQUEST_URI} ^/newproject/src/View/ [NC]
+    RewriteRule ^ - [F,L]
+</IfModule>

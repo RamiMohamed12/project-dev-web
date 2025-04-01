@@ -166,8 +166,45 @@ class User {
             return false;
         }
     }
+    public function getStudentByEmail($email) {
+        try {
+            $sql = "SELECT * FROM student WHERE email = :email";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':email', $email);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $this->error = 'Error: ' . $e->getMessage();
+            return false;
+        }
+    }
 
+    public function getPiloteByEmail($email) {
+        try {
+            $sql = "SELECT * FROM pilote WHERE email = :email";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':email', $email);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $this->error = 'Error: ' . $e->getMessage();
+            return false;
+        }
+    }
 
+    public function getAdminByEmail($email) {
+        try {
+            $sql = "SELECT * FROM admin WHERE email = :email";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':email', $email);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $this->error = 'Error: ' . $e->getMessage();
+            return false;
+        }
+    }
+    
     // Get error message
     public function getError() {
         return $this->error;
