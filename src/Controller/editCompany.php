@@ -1,4 +1,3 @@
-<!-- filepath: c:\xampp\htdocs\newproject\src\Controller\editCompany.php -->
 <?php
 
 require_once __DIR__ . '/../../config/config.php';

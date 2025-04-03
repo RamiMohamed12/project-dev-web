@@ -38,9 +38,94 @@ if (!$userDetails) {
 
 // Handle form submission for updating the user
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] == 'update') {
-    // Add update logic here once you implement update methods in User class
-    echo "Update functionality will be implemented soon.";
-    exit();
+
+    $updateData = [
+        'name' => $_POST['name'] ?? null,
+        'email' => $_POST['email'] ?? null,
+        'password' => $_POST['password'] ?? null, // This line was already here, ready to receive the password
+    ];
+
+    // Important: Ensure your update methods in Model/user.php handle the password
+    // - They should only update the password if $updateData['password'] is not empty.
+    // - They MUST hash the password before storing it (e.g., using password_hash()).
+
+    if ($type !== 'admin') {
+        $updateData['location'] = $_POST['location'] ?? null;
+        $updateData['phone_number'] = $_POST['phone'] ?? null;
+        // Note: date_of_birth was missing here in the original POST handling for pilote/admin
+        // Add it if pilotes need DOB too, otherwise keep as is.
+        // $updateData['date_of_birth'] = $_POST['dob'] ?? null;
+    }
+    if ($type === 'student') {
+        $updateData['year'] = $_POST['year'] ?? null;
+        $updateData['description'] = $_POST['description'] ?? null;
+        $updateData['date_of_birth'] = $_POST['dob'] ?? null; // DOB is student-specific in the form
+    }
+
+    // Validate required fields
+    if (empty($updateData['name']) || empty($updateData['email'])) {
+        echo "Error: Name and email are required.";
+        exit();
+    }
+    if ($type === 'student' && empty($updateData['year'])) {
+        echo "Error: Year is required for students.";
+        exit();
+    }
+    // Note: You might want validation for the student DOB if it's required
+    // if ($type === 'student' && empty($updateData['date_of_birth'])) {
+    //     echo "Error: Date of Birth is required for students.";
+    //     exit();
+    // }
+
+
+    // Update user based on type
+    $result = false;
+    switch($type) {
+        case 'student':
+            // Make sure updateStudent accepts and handles the password parameter
+            $result = $user->updateStudent(
+                $id,
+                $updateData['name'],
+                $updateData['email'],
+                $updateData['location'],
+                $updateData['phone_number'],
+                $updateData['date_of_birth'],
+                $updateData['year'],
+                $updateData['description'],
+                $updateData['password'] // Pass the new password (or null/empty)
+            );
+            break;
+        case 'pilote':
+             // Make sure updatePilote accepts and handles the password parameter
+            $result = $user->updatePilote(
+                $id,
+                $updateData['name'],
+                $updateData['email'],
+                $updateData['location'],
+                $updateData['phone_number'],
+                $updateData['password'] // Pass the new password (or null/empty)
+
+            );
+            break;
+        case 'admin':
+             // Make sure updateAdmin accepts and handles the password parameter
+            $result = $user->updateAdmin(
+                $id,
+                $updateData['name'],
+                $updateData['email'],
+                $updateData['password'] // Pass the new password (or null/empty)
+            );
+            break;
+    }
+
+    if ($result) {
+        header("Location: userController.php?update=success");
+        exit();
+    } else {
+        // Provide more specific error if possible from the model
+        echo "Error updating user.";
+        exit();
+    }
 }
 
 ?>
@@ -63,36 +148,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
             <input type="hidden" name="action" value="update">
             <div class="form-group">
                 <label for="name">Name:</label>
-                <input type="text" name="name" value="<?= htmlspecialchars($userDetails['name']) ?>" required>
+                <input type="text" id="name" name="name" value="<?= htmlspecialchars($userDetails['name']) ?>" required>
             </div>
             <div class="form-group">
                 <label for="email">Email:</label>
-                <input type="email" name="email" value="<?= htmlspecialchars($userDetails['email']) ?>" required>
+                <input type="email" id="email" name="email" value="<?= htmlspecialchars($userDetails['email']) ?>" required>
             </div>
+
+            <!-- Added Password Field -->
+            <div class="form-group">
+                <label for="password">New Password (leave blank to keep current):</label>
+                <input type="password" id="password" name="password">
+            </div>
+            <!-- End Added Password Field -->
+
 
             <?php if ($type !== 'admin'): ?>
             <div class="form-group">
                 <label for="location">Location:</label>
-                <input type="text" name="location" value="<?= htmlspecialchars($userDetails['location']) ?>">
+                <input type="text" id="location" name="location" value="<?= htmlspecialchars($userDetails['location'] ?? '') ?>"> <!-- Added null coalescing for safety -->
             </div>
             <div class="form-group">
                 <label for="phone">Phone:</label>
-                <input type="text" name="phone" value="<?= htmlspecialchars($userDetails['phone_number']) ?>">
+                <input type="text" id="phone" name="phone" value="<?= htmlspecialchars($userDetails['phone_number'] ?? '') ?>"> <!-- Added null coalescing for safety -->
             </div>
             <?php endif; ?>
 
             <?php if ($type === 'student'): ?>
+             <!-- Moved DOB field inside student-specific block as it wasn't shown for pilotes -->
             <div class="form-group">
                 <label for="dob">Date of Birth:</label>
-                <input type="date" name="dob" value="<?= htmlspecialchars($userDetails['date_of_birth']) ?>" required>
+                <!-- Make sure dob is required if your logic expects it -->
+                <input type="date" id="dob" name="dob" value="<?= htmlspecialchars($userDetails['date_of_birth'] ?? '') ?>" required> <!-- Added null coalescing for safety -->
             </div>
             <div class="form-group">
                 <label for="year">Year:</label>
-                <select name="year" required>
-                    <?php 
+                <select id="year" name="year" required>
+                    <?php
                     $years = ['1st', '2nd', '3rd', '4th', '5th'];
                     foreach ($years as $y) {
-                        $selected = ($userDetails['year'] === $y) ? 'selected' : '';
+                        // Use null coalescing for safety in case year isn't set
+                        $selected = (($userDetails['year'] ?? '') === $y) ? 'selected' : '';
                         echo "<option value=\"$y\" $selected>$y Year</option>";
                     }
                     ?>
@@ -100,7 +196,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
             </div>
             <div class="form-group">
                 <label for="description">Description:</label>
-                <textarea name="description"><?= htmlspecialchars($userDetails['description']) ?></textarea>
+                <textarea id="description" name="description"><?= htmlspecialchars($userDetails['description'] ?? '') ?></textarea> <!-- Added null coalescing for safety -->
             </div>
             <?php endif; ?>
 
