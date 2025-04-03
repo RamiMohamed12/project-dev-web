@@ -1,17 +1,28 @@
 <?php
 // Location: /home/demy/project-dev-web/src/View/admin.php
 
-// --- Authentication Check ---
+// --- Authentication Check & Session ---
 require_once __DIR__ . '/../Auth/AuthCheck.php';
-AuthCheck::checkUserAuth('admin', 'login.php');
-// --- End Authentication Check ---
+require_once __DIR__ . '/../Auth/AuthSession.php'; // Include AuthSession for user data
 
+// Start session MUST be before AuthCheck if AuthCheck potentially starts session
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
+AuthCheck::checkUserAuth('admin', 'login.php');
+// --- End Authentication Check ---
 
-$userName = htmlspecialchars($_SESSION['user_name'] ?? 'Admin');
-$userEmail = htmlspecialchars($_SESSION['user_email'] ?? 'N/A');
+// Get Logged-in User Info using AuthSession
+$userName = htmlspecialchars(AuthSession::getUserData('user_name') ?? 'Admin');
+$userEmail = htmlspecialchars(AuthSession::getUserData('user_email') ?? 'N/A');
+$loggedInUserId = AuthSession::getUserData('user_id'); // Get ID for My Profile link
+
+// --- Message Handling ---
+$successMessage = '';
+if (isset($_GET['profile_update']) && $_GET['profile_update'] == 'success') {
+    $successMessage = "Your profile has been updated successfully.";
+}
+// You could add other success messages here if needed
 
 ?>
 <!DOCTYPE html>
@@ -20,7 +31,7 @@ $userEmail = htmlspecialchars($_SESSION['user_email'] ?? 'N/A');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="style.css"> <!-- Assuming style.css exists -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style> /* Basic styles */
         body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; }
@@ -36,6 +47,9 @@ $userEmail = htmlspecialchars($_SESSION['user_email'] ?? 'N/A');
         .dashboard-actions a { display: inline-block; margin: 5px; padding: 10px 15px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; transition: background-color 0.2s ease; }
         .dashboard-actions a:hover { background-color: #0056b3; }
         .dashboard-actions a i { margin-right: 5px; }
+        /* Message Styles */
+        .message { padding: 10px 15px; margin-bottom: 15px; border-radius: 4px; border: 1px solid transparent; }
+        .success-message { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
     </style>
 </head>
 <body>
@@ -44,30 +58,41 @@ $userEmail = htmlspecialchars($_SESSION['user_email'] ?? 'N/A');
         <nav>
             <ul>
                  <li><a href="admin.php" class="active">Dashboard</a></li>
-                 <!-- Adjust links based on your user management controllers/views -->
-                 <li><a href="../Controller/manageUserController.php?type=admin">Manage Admins</a></li>
-                 <li><a href="../Controller/manageUserController.php?type=pilote">Manage Pilotes</a></li>
-                 <li><a href="../Controller/manageUserController.php?type=student">Manage Students</a></li>
+                 <li><a href="../Controller/userController.php">Manage Users</a></li>
                  <li><a href="../Controller/companyController.php">Manage Companies</a></li>
                  <li><a href="../Controller/offerController.php">Manage Offers</a></li>
+                 <!-- ***** ADDED MY PROFILE LINK ***** -->
+                 <?php if ($loggedInUserId): ?>
+                    <li><a href="../Controller/editUser.php?id=<?= $loggedInUserId ?>&type=admin">My Profile</a></li>
+                 <?php endif; ?>
                  <li><a href="../Controller/logoutController.php">Logout <i class="fa-solid fa-right-from-bracket"></i></a></li>
             </ul>
         </nav>
     </header>
     <main>
         <h2>Welcome, <?= $userName ?>!</h2>
+
+        <!-- Display Success Messages -->
+        <?php if (!empty($successMessage)): ?>
+            <div class="message success-message"><?= htmlspecialchars($successMessage) ?></div>
+        <?php endif; ?>
+
         <div class="user-info">
             <p><strong>Email:</strong> <?= $userEmail ?></p>
             <p><strong>Role:</strong> Administrator</p>
-            <p><strong>Logged in since:</strong> <?= date('Y-m-d H:i:s', $_SESSION['logged_in_time'] ?? time()) ?></p>
+            <p><strong>Logged in since:</strong> <?= date('Y-m-d H:i:s', AuthSession::getUserData('logged_in_time') ?? time()) ?></p>
         </div>
-        <p>Use the navigation to manage application data.</p>
+
+        <p>Use the navigation to manage all application data.</p>
+
         <div class="dashboard-actions">
-             <a href="../Controller/manageUserController.php?type=admin"><i class="fa-solid fa-user-gear"></i> Manage Admins</a>
-             <a href="../Controller/manageUserController.php?type=pilote"><i class="fa-solid fa-user-tie"></i> Manage Pilotes</a>
-             <a href="../Controller/manageUserController.php?type=student"><i class="fa-solid fa-user-graduate"></i> Manage Students</a>
-             <a href="../Controller/companyController.php"><i class="fa-solid fa-building"></i> Manage Companies</a>
+             <a href="../Controller/userController.php"><i class="fa-solid fa-users-gear"></i> Manage All Users</a>
+             <a href="../Controller/companyController.php"><i class="fa-solid fa-building"></i> Manage All Companies</a>
              <a href="../Controller/offerController.php"><i class="fa-solid fa-file-alt"></i> Manage Offers</a>
+             <!-- ***** ADDED MY PROFILE BUTTON ***** -->
+             <?php if ($loggedInUserId): ?>
+                 <a href="../Controller/editUser.php?id=<?= $loggedInUserId ?>&type=admin"><i class="fa-solid fa-user-pen"></i> Edit My Profile</a>
+             <?php endif; ?>
         </div>
     </main>
     <footer>
