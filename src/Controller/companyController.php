@@ -5,43 +5,31 @@
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../Model/company.php'; // Use Company model
 require_once __DIR__ . '/../Auth/AuthSession.php';
-require_once __DIR__ . '/../Auth/AuthCheck.php';
+// require_once __DIR__ . '/../Auth/AuthCheck.php'; // Specific checks done below
 
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
+if (session_status() == PHP_SESSION_NONE) { session_start(); }
 
-// --- Basic Auth Check ---
-if (!AuthSession::isUserLoggedIn()) {
-    header("Location: ../View/login.php?error=" . urlencode("Authentication required."));
-    exit();
-}
-
-// --- Get Logged-in User Info ---
+// --- Basic Auth Check & Role/ID ---
+if (!AuthSession::isUserLoggedIn()) { header("Location: ../View/login.php?error=" . urlencode("Auth required.")); exit(); }
 $loggedInUserRole = AuthSession::getUserData('user_role');
 $loggedInUserId = AuthSession::getUserData('user_id');
-
-// --- Authorization Check (Admins or Pilotes only) ---
-if ($loggedInUserRole !== 'admin' && $loggedInUserRole !== 'pilote') {
-     AuthSession::destroySession();
-     header("Location: ../View/login.php?error=" . urlencode("Access Denied: Insufficient privileges for company management."));
-     exit();
-}
+if ($loggedInUserRole !== 'admin' && $loggedInUserRole !== 'pilote') { AuthSession::destroySession(); header("Location: ../View/login.php?error=" . urlencode("Access Denied.")); exit(); }
 
 // --- Instantiate Model ---
-try {
-    $companyModel = new Company($conn);
-} catch (Exception $e) {
-    error_log("Failed to instantiate Company model: " . $e->getMessage());
-    die("A critical error occurred setting up company management.");
-}
+try { $companyModel = new Company($conn); }
+catch (Exception $e) { error_log("Company controller model error: " . $e->getMessage()); die("Critical error (CCM)."); }
 
-// --- Variables for the View ---
+// --- Init View Vars ---
 $companies = [];
 $pageTitle = "Company Management";
-$errorMessage = $companyModel->error; // Get potential errors
-$successMessage = '';
-// Add success message handling similar to userController if needed
+$errorMessage = ''; // Initialize empty
+$successMessage = ''; // Initialize empty
+
+// Check for messages passed via GET params from redirects
+if(isset($_GET['update']) && $_GET['update'] == 'success') { $successMessage = "Company updated successfully."; }
+if(isset($_GET['delete']) && $_GET['delete'] == 'success') { $successMessage = "Company deleted successfully."; }
+if(isset($_GET['add']) && $_GET['add'] == 'success') { $successMessage = "Company added successfully."; }
+if(isset($_GET['error'])) { $errorMessage = htmlspecialchars(urldecode($_GET['error'])); }
 
 
 // --- Handle POST Actions (Add, Delete) ---
@@ -50,24 +38,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
 
     // --- ACTION: Add Company ---
     if ($action == 'add') {
-        // Permissions: Admin & Pilote can add
+        // Retrieve all potential fields
         $name = $_POST['name'] ?? '';
         $location = $_POST['location'] ?? '';
         $description = $_POST['description'] ?? '';
         $email = $_POST['email'] ?? '';
         $phone = $_POST['phone'] ?? '';
+        $url = $_POST['url'] ?? null; // ***** GET URL FIELD *****
 
         $creatorPiloteId = ($loggedInUserRole === 'pilote') ? $loggedInUserId : null;
 
+        // Basic required field validation
         if (empty($name) || empty($location) || empty($email) || empty($phone)) {
              $errorMessage = "Error: Name, Location, Email, and Phone are required.";
         } else {
-            $result = $companyModel->create($name, $location, $description, $email, $phone, $creatorPiloteId);
+            // Attempt to create the company (model handles further validation like email/url format)
+            $result = $companyModel->create(
+                $name, $location, $description, $email, $phone,
+                $url, // ***** PASS URL TO MODEL *****
+                $creatorPiloteId
+            );
+
             if ($result) {
-                header("Location: " . $_SERVER['PHP_SELF'] . "?add=success"); // Redirect
+                header("Location: " . $_SERVER['PHP_SELF'] . "?add=success"); // Redirect on success
                 exit();
             } else {
-                $errorMessage = $companyModel->error ?: "Error: Could not add company.";
+                // If create failed, get error from model
+                $errorMessage = $companyModel->getError() ?: "Error: Could not add company. Please check details.";
             }
         }
     }
@@ -76,73 +73,75 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
         $idToDelete = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 
         if ($idToDelete <= 0) {
-             $errorMessage = "Error: Invalid ID for deletion.";
+             $errorMessage = "Error: Invalid ID provided for deletion.";
         } else {
-            // Authorization check
+            // Authorization check before deleting
             $allowedToDelete = false;
-            $companyDetails = $companyModel->read($idToDelete); // Fetch company details including creator
+            $companyDetails = null;
+            try {
+                $companyDetails = $companyModel->read($idToDelete); // Fetch details to check owner
+            } catch (Exception $e) {
+                error_log("Error fetching company for delete check (ID: $idToDelete): " . $e->getMessage());
+                $errorMessage="Error verifying company before deletion.";
+            }
 
-            if (!$companyDetails) {
-                 $errorMessage = "Error: Company not found for deletion.";
-            } elseif ($loggedInUserRole === 'admin') {
-                 $allowedToDelete = true; // Admins can delete any company
-            } elseif ($loggedInUserRole === 'pilote') {
-                // Pilotes can only delete companies they created
-                if (isset($companyDetails['created_by_pilote_id']) && $companyDetails['created_by_pilote_id'] == $loggedInUserId) {
-                    $allowedToDelete = true;
-                } else {
-                    $errorMessage = "Error: You can only delete companies you created.";
+            if (!$companyDetails && empty($errorMessage)) { // Check if fetch worked and company exists
+                 $errorMessage = "Error: Company not found (ID: $idToDelete).";
+            } elseif (empty($errorMessage)) { // Only proceed if fetch worked
+                 if ($loggedInUserRole === 'admin') {
+                     $allowedToDelete = true; // Admins can delete any
+                } elseif ($loggedInUserRole === 'pilote') {
+                    // Pilotes can delete only if 'created_by_pilote_id' matches their ID
+                    if (isset($companyDetails['created_by_pilote_id']) && $companyDetails['created_by_pilote_id'] == $loggedInUserId) {
+                        $allowedToDelete = true;
+                    } else {
+                        $errorMessage = "Error: You do not have permission to delete this company.";
+                    }
                 }
             }
 
-            if (!$allowedToDelete && empty($errorMessage)) {
-                 $errorMessage = "Error: You do not have permission to delete this company.";
-            }
 
-            if ($allowedToDelete) {
+            if ($allowedToDelete) { // Proceed only if authorized
                 $result = $companyModel->delete($idToDelete);
                  if ($result) {
-                    header("Location: " . $_SERVER['PHP_SELF'] . "?delete=success"); // Redirect
+                    header("Location: " . $_SERVER['PHP_SELF'] . "?delete=success"); // Redirect on success
                     exit();
                 } else {
-                    $errorMessage = $companyModel->error ?: "Error: Could not delete company.";
-                     // Consider if foreign key constraints (internships) might prevent deletion
-                     if (strpos($errorMessage, 'foreign key constraint') !== false) {
-                         $errorMessage = "Error: Cannot delete company because it has associated internships.";
-                     }
+                    // Get error (could be DB error or constraint violation)
+                    $errorMessage = $companyModel->getError() ?: "Error: Could not delete company.";
                 }
+            } elseif(empty($errorMessage)) { // If not allowed but no specific error set
+                $errorMessage = "Error: Permission denied to delete this company.";
             }
-        }
-    }
-}
+        } // End ID check
+    } // End delete action
+} // End POST handling
 
 
-// --- Fetch Data for Display Based on Role ---
+// --- Fetch Data for Display (GET request or after failed POST) ---
 try {
     if ($loggedInUserRole === 'admin') {
-        // Admin sees all companies
-        $companies = $companyModel->readAll();
+        $companies = $companyModel->readAll(); // Admin gets all
          $pageTitle = "Manage All Companies";
     } elseif ($loggedInUserRole === 'pilote') {
-        // Pilote sees ONLY companies they created
-        $companies = $companyModel->readAll($loggedInUserId); // Pass pilote's ID
+        $companies = $companyModel->readAll($loggedInUserId); // Pilote gets only their own
          $pageTitle = "Manage My Companies";
     }
 
+    // Check if readAll returned false (indicating an error)
     if ($companies === false) {
-        $errorMessage = $companyModel->error ?: "Error fetching company data.";
+        $errorMessage = $companyModel->getError() ?: "Error fetching company data."; // Get specific error if available
         error_log("Error in companyController fetching data: " . $errorMessage);
-        $companies = []; // Prevent view errors
+        $companies = []; // Ensure $companies is an empty array for the view
     }
 
 } catch (Exception $e) {
      error_log("Exception fetching company data in companyController: " . $e->getMessage());
      $errorMessage = "An unexpected error occurred while retrieving the company list.";
-     $companies = [];
+     $companies = []; // Ensure $companies is an empty array
 }
 
 // --- Include the View ---
-// The view needs to be updated to conditionally show edit/delete links
-include __DIR__ . '/../View/manageCompaniesView.php'; // Assuming a separate view file
-
+// Pass necessary variables to the view file
+include __DIR__ . '/../View/manageCompaniesView.php';
 ?>
