@@ -16,7 +16,7 @@ try {
     $info = "Connection failed: " . $e->getMessage();
 }
 
-echo $info;
+//echo $info;
 
 
 ?>
