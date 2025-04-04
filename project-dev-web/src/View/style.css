@@ -1,0 +1,1224 @@
+/* =========================================
+   Variables & Root
+   ========================================= */
+:root {
+    /* Light mode variables */
+    --sidebar-width: 280px;
+    --sidebar-bg: #000000;
+    --sidebar-active: #8b0000;
+    --sidebar-hover-bg: rgba(255, 255, 255, 0.1);
+    --sidebar-text: #ffffff;
+    --sidebar-border: rgba(255, 255, 255, 0.1);
+    --main-bg: #f4f6f9;
+    --text-dark: #343a40;
+    --container-bg: #ffffff;
+    --input-bg: #ffffff;
+    --input-border: #dee2e6;
+    --table-border: #e9ecef;
+    --table-header-bg: #f8f9fa;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+    --transition: all 0.3s ease;
+
+    /* Admin Theme Colors */
+    --admin-primary: #8B0000;
+    --admin-primary-dark: #660000;
+    --admin-hover: #730000;
+    
+    /* Pilot Theme Colors */
+    --pilote-primary: #4169E1;
+    --pilote-primary-dark: #1e40af;
+    --pilote-hover: #2851c7;
+}
+
+/* Dark mode variables */
+[data-theme="dark"] {
+    --main-bg: #1a1a1a;
+    --text-dark: #ffffff;
+    --container-bg: #242526;
+    --input-bg: #3a3b3c;
+    --input-border: #4a4b4c;
+    --table-border: #4a4b4c;
+    --table-header-bg: #3a3b3c;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* =========================================
+   Global / Basic Styles
+   ========================================= */
+body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--main-bg);
+    line-height: 1.6;
+    color: var(--text-dark);
+    display: flex;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* =========================================
+   Sidebar Styles
+   ========================================= */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background-color: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    padding: 20px 0;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.sidebar h1 {
+    padding: 0 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.2rem;
+}
+
+.sidebar h1 span {
+    font-size: 1.2em;
+    margin-left: 12px;
+    white-space: nowrap;
+    font-family: 'Poppins', sans-serif;
+}
+
+.sidebar img.profile-pic-header {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--sidebar-border);
+    flex-shrink: 0;
+}
+
+.sidebar nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.sidebar nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar nav .main-menu {
+    flex-grow: 1;
+    padding: 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sidebar nav .bottom-menu {
+    margin-top: auto;
+    border-top: 1px solid var(--sidebar-border);
+    padding: 1.5rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.sidebar nav .bottom-menu li {
+    width: auto;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar nav .bottom-menu li a,
+.sidebar nav .bottom-menu .theme-toggle {
+    width: auto;
+    margin: 0;
+    padding: 12px 20px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar nav .bottom-menu li:last-child {
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar nav .bottom-menu li:last-child a {
+    width: auto;
+    margin: 0;
+}
+
+.sidebar nav ul li {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    padding: 0.5rem 0;
+    margin-bottom: 0.5rem;
+}
+
+/* Sidebar Buttons */
+.sidebar nav ul li a,
+.sidebar nav ul li .theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    padding: 12px 20px;
+    transition: var(--transition);
+    border-left: 3px solid transparent;
+    font-size: 1rem;
+    border-radius: 50px;
+    width: 85%;
+    margin-left: 20px;
+    font-weight: 500;
+    background-color: transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'Poppins', sans-serif;
+    text-align: left;
+}
+
+.sidebar nav ul li a i,
+.sidebar nav ul li .theme-toggle i {
+    width: 20px;
+    text-align: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    margin-right: 12px;
+}
+
+/* Hover Effect */
+.sidebar nav ul li a:hover {
+    background-color: var(--sidebar-hover-bg);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Active State */
+.sidebar nav ul li a.active {
+    background-color: var(--sidebar-active);
+    color: var(--sidebar-text);
+    border-left: 3px solid var(--sidebar-active);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Main Content Styles */
+.main-content {
+    flex: 1;
+    padding: 30px;
+    background-color: var(--main-bg);
+    box-sizing: border-box;
+    overflow-x: hidden;
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    width: calc(100% - var(--sidebar-width));
+    position: relative;
+}
+
+/* =========================================
+   Page Container Styles
+   ========================================= */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 40px;
+}
+
+/* Section Headers */
+.container h2 {
+    color: #2c3e50;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.container h2 i {
+    color: var(--sidebar-active);
+}
+
+/* =========================================
+   Form Styles
+   ========================================= */
+.form-container {
+    background-color: var(--bg-secondary);
+    padding: 2rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+.form-container h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.form-group label i {
+    margin-right: 0.5rem;
+    color: var(--sidebar-active);
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="date"],
+.form-group input[type="url"],
+.form-group input[type="tel"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.form-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M8 11.5l-5-5h10l-5 5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Form Buttons */
+.form-container button[type="submit"] {
+    background-color: #8B0000;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    margin-top: 1.5rem;
+    width: auto;
+}
+
+.form-container button[type="submit"]:hover {
+    background-color: #660000;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.form-container button[type="submit"] i {
+    font-size: 1.1rem;
+}
+
+/* =========================================
+   Table Styles
+   ========================================= */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 1rem 0;
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+th, td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #2c3e50;
+    white-space: nowrap;
+}
+
+td {
+    color: #4a5568;
+    font-size: 0.95rem;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover td {
+    background-color: #f8f9fa;
+}
+
+/* Table Actions */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.actions a,
+.actions button {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+}
+
+.actions a i,
+.actions button i {
+    font-size: 14px !important;
+    line-height: 1 !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.edit-btn {
+    background-color: #FFD700 !important;
+    color: #000000 !important;
+}
+
+.edit-btn:hover {
+    background-color: #FFC400 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.delete-btn {
+    background-color: #FF0000 !important;
+    color: #ffffff !important;
+}
+
+.delete-btn:hover {
+    background-color: #E60000 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Hide any text spans in action buttons */
+.actions a span,
+.actions button span {
+    display: none !important;
+}
+
+/* =========================================
+   Message Styles
+   ========================================= */
+.message {
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+}
+
+.success-message {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.error-message {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.message i {
+    font-size: 1.1rem;
+}
+
+/* =========================================
+   Profile Picture Preview
+   ========================================= */
+.profile-pic-preview {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 1rem 0;
+    border: 3px solid #e9ecef;
+    box-shadow: var(--shadow-sm);
+}
+
+.remove-pic-label {
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-left: 0.5rem;
+}
+
+/* =========================================
+   User Info Card
+   ========================================= */
+.user-info {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    padding: 25px;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.user-info::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(to right, #007bff, #00c6ff);
+}
+
+.user-info .profile-pic-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    float: left;
+    margin: 0 25px 15px 0;
+    border: 4px solid #f8f9fa;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.user-info .profile-pic-large:hover {
+    transform: scale(1.05);
+}
+
+.user-info h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #343a40;
+    font-weight: 600;
+    border-bottom: none;
+}
+
+.user-info p {
+    margin-bottom: 10px;
+    color: #495057;
+    font-size: 1.05em;
+}
+
+.user-info strong {
+    color: #212529;
+    font-weight: 600;
+}
+
+/* =========================================
+   Dashboard Actions
+   ========================================= */
+.dashboard-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.dashboard-actions a {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.dashboard-actions a:hover {
+    background-color: #0069d9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.dashboard-actions a:active {
+    transform: translateY(0);
+}
+
+.dashboard-actions a i {
+    margin-right: 10px;
+}
+
+/* =========================================
+   Footer
+   ========================================= */
+footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px;
+    background-color: #eaecf4;
+    color: #858796;
+    font-size: 0.9em;
+    border-top: 1px solid #d1d3e2;
+    border-radius: 8px;
+}
+
+/* =========================================
+   Responsive Adjustments
+   ========================================= */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding: 15px;
+    }
+    
+    .main-content {
+        max-width: 100%;
+        padding: 15px;
+    }
+    
+    .user-info .profile-pic-large {
+        float: none;
+        margin: 0 auto 15px;
+        display: block;
+    }
+    
+    .user-info h2, .user-info p {
+        text-align: center;
+    }
+}
+
+/* Dark mode specific styles */
+[data-theme="dark"] .container {
+    background-color: var(--container-bg);
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .form-container {
+    background-color: var(--bg-secondary);
+}
+
+[data-theme="dark"] .form-group label {
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group textarea {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .user-info {
+    background-color: var(--container-bg);
+    border-color: var(--input-border);
+}
+
+[data-theme="dark"] .user-info h2,
+[data-theme="dark"] .user-info p,
+[data-theme="dark"] .user-info strong {
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .dashboard-welcome {
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] footer {
+    color: var(--text-dark);
+    border-color: var(--input-border);
+}
+
+[data-theme="dark"] .message {
+    background-color: var(--container-bg);
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] h2 {
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] small {
+    color: #b0b3b8;
+}
+
+[data-theme="dark"] .success-message {
+    background-color: #1b4332;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .error-message {
+    background-color: #7f1d1d;
+    color: #ffffff;
+}
+
+/* Dark Mode Toggle Button */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    padding: 12px 20px;
+    transition: var(--transition);
+    border-radius: 50px;
+    width: 85%;
+    margin: 0 auto;
+    font-weight: 500;
+    background-color: transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    border: none;
+    gap: 12px;
+}
+
+.theme-toggle i {
+    width: 20px;
+    text-align: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+    background-color: var(--sidebar-hover-bg);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme="dark"] table {
+    background-color: var(--container-bg);
+    border-color: var(--input-border);
+}
+
+[data-theme="dark"] th {
+    background-color: var(--table-header-bg);
+    color: var(--text-dark);
+    border-bottom: 1px solid var(--table-border);
+}
+
+[data-theme="dark"] td {
+    color: var(--text-dark);
+    border-bottom: 1px solid var(--table-border);
+}
+
+[data-theme="dark"] tr:hover td {
+    background-color: #3a3b3c;
+}
+
+[data-theme="dark"] .actions a,
+[data-theme="dark"] .actions button {
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .edit-btn {
+    background-color: #FFD700 !important;
+    color: #000000 !important;
+}
+
+[data-theme="dark"] .edit-btn:hover {
+    background-color: #FFC400 !important;
+}
+
+[data-theme="dark"] .delete-btn {
+    background-color: #FF0000 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .delete-btn:hover {
+    background-color: #E60000 !important;
+}
+
+/* Dark Mode Toggle Switch */
+.theme-switch-wrapper {
+    display: none;
+}
+
+/* Update theme switch styles for sidebar */
+.theme-switch {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    background-color: transparent;
+    border-radius: 50%;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    color: var(--sidebar-text);
+}
+
+.theme-switch::before {
+    display: none;
+}
+
+.theme-switch .moon-icon,
+.theme-switch .sun-icon {
+    position: static;
+    width: auto;
+    height: auto;
+    color: var(--sidebar-text);
+    transition: opacity 0.3s ease;
+}
+
+.theme-switch .moon-icon {
+    display: none;
+}
+
+[data-theme="dark"] .theme-switch .moon-icon {
+    display: block;
+}
+
+[data-theme="dark"] .theme-switch .sun-icon {
+    display: none;
+}
+
+/* =========================================
+   Button Styles
+   ========================================= */
+.add-user-btn {
+    background-color: #8B0000 !important;
+    color: white !important;
+    padding: 0.75rem 1.5rem !important;
+    border: none !important;
+    border-radius: 50px !important;
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    text-decoration: none !important;
+    margin-top: 1.5rem !important;
+}
+
+.add-user-btn:hover {
+    background-color: #660000 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+.add-user-btn i {
+    font-size: 1.1rem !important;
+}
+
+/* Header flex container */
+.container .header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #eee;
+}
+
+.container .header-flex h2 {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+/* Form container add button */
+.form-container .add-user-btn {
+    margin-top: 1rem;
+    margin-bottom: 0;
+}
+
+[data-theme="dark"] .add-user-btn,
+[data-theme="dark"] .form-container button[type="submit"] {
+    background-color: #8B0000;
+}
+
+[data-theme="dark"] .add-user-btn:hover,
+[data-theme="dark"] .form-container button[type="submit"]:hover {
+    background-color: #660000;
+}
+
+/* Profile Form Buttons */
+.form-group input[type="file"] {
+    display: none;
+}
+
+.form-group .file-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #8B0000;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    margin-top: 0.5rem;
+}
+
+.form-group .file-upload-btn:hover {
+    background-color: #660000;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.form-group .file-upload-btn i {
+    font-size: 1.1rem;
+    color: white;
+}
+
+.remove-picture-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #dc3545;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    margin-top: 1rem;
+    text-decoration: none;
+}
+
+.remove-picture-btn:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.remove-picture-btn i {
+    font-size: 1.1rem;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .file-upload-btn {
+    background-color: #8B0000;
+}
+
+[data-theme="dark"] .file-upload-btn:hover {
+    background-color: #660000;
+}
+
+[data-theme="dark"] .remove-picture-btn {
+    background-color: #dc3545;
+}
+
+[data-theme="dark"] .remove-picture-btn:hover {
+    background-color: #c82333;
+}
+
+/* Update Profile Button */
+.profile-update-btn {
+    background-color: #8B0000;
+    color: white;
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.profile-update-btn:hover {
+    background-color: #660000;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.profile-update-btn i {
+    font-size: 1.1rem;
+}
+
+/* Custom Checkbox Styles */
+.custom-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.custom-checkbox input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.custom-checkbox .checkbox-label {
+    position: relative;
+    padding-left: 35px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #dc3545;
+    display: flex;
+    align-items: center;
+    user-select: none;
+}
+
+.custom-checkbox .checkbox-label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    border: 2px solid #dc3545;
+    border-radius: 6px;
+    background-color: transparent;
+    transition: all 0.3s ease;
+}
+
+.custom-checkbox .checkbox-label::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #fff;
+    font-size: 12px;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.custom-checkbox input[type="checkbox"]:checked + .checkbox-label::before {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.custom-checkbox input[type="checkbox"]:checked + .checkbox-label::after {
+    opacity: 1;
+}
+
+.custom-checkbox input[type="checkbox"]:focus + .checkbox-label::before {
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+}
+
+.custom-checkbox:hover .checkbox-label::before {
+    border-color: #bd2130;
+}
+
+/* Dark mode support for custom checkbox */
+[data-theme="dark"] .custom-checkbox .checkbox-label {
+    color: #ff6b6b;
+}
+
+[data-theme="dark"] .custom-checkbox .checkbox-label::before {
+    border-color: #ff6b6b;
+}
+
+[data-theme="dark"] .custom-checkbox input[type="checkbox"]:checked + .checkbox-label::before {
+    background-color: #ff6b6b;
+    border-color: #ff6b6b;
+}
+
+[data-theme="dark"] .custom-checkbox:hover .checkbox-label::before {
+    border-color: #fa5252;
+}
+
+[data-theme="dark"] .custom-checkbox input[type="checkbox"]:focus + .checkbox-label::before {
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
+}
+
+/* =========================================
+   Role-based Theme Colors
+   ========================================= */
+:root {
+    /* Admin Theme Colors */
+    --admin-primary: #8B0000;
+    --admin-primary-dark: #660000;
+    --admin-hover: #730000;
+    
+    /* Pilot Theme Colors */
+    --pilote-primary: #4169E1;
+    --pilote-primary-dark: #1e40af;
+    --pilote-hover: #2851c7;
+}
+
+/* Admin Theme */
+body.role-admin {
+    --theme-primary: var(--admin-primary);
+    --theme-primary-dark: var(--admin-primary-dark);
+    --theme-hover: var(--admin-hover);
+}
+
+/* Pilot Theme */
+body.role-pilote {
+    --theme-primary: var(--pilote-primary);
+    --theme-primary-dark: var(--pilote-primary-dark);
+    --theme-hover: var(--pilote-hover);
+}
+
+/* Apply theme colors to all relevant elements */
+.role-admin .sidebar,
+.role-pilote .sidebar {
+    --sidebar-active: var(--theme-primary);
+}
+
+.role-admin .sidebar nav ul li a:hover,
+.role-pilote .sidebar nav ul li a:hover {
+    background-color: var(--theme-hover);
+}
+
+.role-admin .sidebar nav ul li a.active,
+.role-pilote .sidebar nav ul li a.active {
+    background-color: var(--theme-primary);
+    border-left: 3px solid var(--theme-primary);
+}
+
+/* Dashboard Actions */
+.role-admin .dashboard-actions a,
+.role-pilote .dashboard-actions a {
+    background-color: var(--theme-primary);
+}
+
+.role-admin .dashboard-actions a:hover,
+.role-pilote .dashboard-actions a:hover {
+    background-color: var(--theme-hover);
+}
+
+/* User Info Card */
+.role-admin .user-info::before,
+.role-pilote .user-info::before {
+    background: linear-gradient(to right, var(--theme-primary), var(--theme-primary-dark));
+}
+
+/* Form Buttons */
+.role-admin .form-container button[type="submit"],
+.role-admin .add-user-btn,
+.role-pilote .form-container button[type="submit"],
+.role-pilote .add-user-btn {
+    background-color: var(--theme-primary);
+}
+
+.role-admin .form-container button[type="submit"]:hover,
+.role-admin .add-user-btn:hover,
+.role-pilote .form-container button[type="submit"]:hover,
+.role-pilote .add-user-btn:hover {
+    background-color: var(--theme-hover);
+}
+
+/* File Upload Button */
+.role-admin .file-upload-btn,
+.role-pilote .file-upload-btn {
+    background-color: var(--theme-primary);
+}
+
+.role-admin .file-upload-btn:hover,
+.role-pilote .file-upload-btn:hover {
+    background-color: var(--theme-hover);
+}
+
+/* Dark mode support */
+[data-theme="dark"] .role-admin .dashboard-actions a,
+[data-theme="dark"] .role-pilote .dashboard-actions a {
+    background-color: var(--theme-primary);
+}
+
+[data-theme="dark"] .role-admin .dashboard-actions a:hover,
+[data-theme="dark"] .role-pilote .dashboard-actions a:hover {
+    background-color: var(--theme-hover);
+}
+
+[data-theme="dark"] .role-admin .form-container button[type="submit"],
+[data-theme="dark"] .role-admin .add-user-btn,
+[data-theme="dark"] .role-pilote .form-container button[type="submit"],
+[data-theme="dark"] .role-pilote .add-user-btn {
+    background-color: var(--theme-primary);
+}
+
+[data-theme="dark"] .role-admin .form-container button[type="submit"]:hover,
+[data-theme="dark"] .role-admin .add-user-btn:hover,
+[data-theme="dark"] .role-pilote .form-container button[type="submit"]:hover,
+[data-theme="dark"] .role-pilote .add-user-btn:hover {
+    background-color: var(--theme-hover);
+}
