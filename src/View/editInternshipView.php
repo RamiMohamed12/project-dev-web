@@ -127,6 +127,18 @@ $backText = 'Back to Internship List';
              ?>
 
             <button type="submit"><i class="fa-solid fa-save"></i> Update Internship Offer</button>
+            
+            <?php if ($loggedInUserRole === 'admin' || ($loggedInUserRole === 'pilote' && isset($internshipDetails['company_creator_id']) && $internshipDetails['company_creator_id'] == $loggedInUserId)): ?>
+                <a href="#" onclick="if(confirm('Are you sure you want to delete this internship offer?')) { document.getElementById('delete-form').submit(); } return false;" 
+                   style="background-color: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1.05em; text-decoration: none; display: inline-block; margin-left: 10px;">
+                    <i class="fa-solid fa-trash-alt"></i> Delete
+                </a>
+                
+                <form id="delete-form" method="post" action="internshipController.php" style="display:none;">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="id" value="<?= htmlspecialchars($internshipDetails['id_internship']) ?>">
+                </form>
+            <?php endif; ?>
         </form>
     </div>
 

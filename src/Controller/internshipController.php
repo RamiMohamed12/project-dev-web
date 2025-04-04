@@ -17,10 +17,10 @@ if (!AuthSession::isUserLoggedIn()) { header("Location: ../View/login.php?error=
 $loggedInUserRole = AuthSession::getUserData('user_role');
 $loggedInUserId = AuthSession::getUserData('user_id');
 
-// --- Authorization: Only Admins and Pilotes can manage internships ---
-if ($loggedInUserRole !== 'admin' && $loggedInUserRole !== 'pilote') {
+// --- Authorization: Only Admins, Pilotes, and Students can access internships ---
+if ($loggedInUserRole !== 'admin' && $loggedInUserRole !== 'pilote' && $loggedInUserRole !== 'student') {
     AuthSession::destroySession(); // Log out unauthorized users
-    header("Location: ../View/login.php?error=" . urlencode("Access Denied: Insufficient privileges for internship management."));
+    header("Location: ../View/login.php?error=" . urlencode("Access Denied: Insufficient privileges."));
     exit();
 }
 
@@ -37,6 +37,11 @@ try {
 $action = $_GET['action'] ?? 'list'; // Default action is to show the list
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
     $action = $_POST['action']; // Override with POST action if present
+}
+
+// If student is trying to access management functions, redirect to view
+if ($loggedInUserRole === 'student' && $action !== 'view') {
+    $action = 'view';
 }
 
 // --- Initialize Variables for Views ---
@@ -92,7 +97,7 @@ try { // Wrap main logic in try-catch
             if ($_SERVER["REQUEST_METHOD"] !== "GET" || !isset($_GET['id']) || !filter_var($_GET['id'], FILTER_VALIDATE_INT)) { header("Location: internshipController.php?action=list&error=invalid_edit_req"); exit(); }
 
             $idToEdit = (int)$_GET['id'];
-            $internshipDetails = $internshipModel->read($idToEdit); // Fetches joined company data too
+            $internshipDetails = $internshipModel->readInternship($idToEdit); // Fetches joined company data too
 
             if (!$internshipDetails) { header("Location: internshipController.php?action=list&error=not_found"); exit(); }
 
@@ -116,13 +121,16 @@ try { // Wrap main logic in try-catch
              if ($_SERVER["REQUEST_METHOD"] !== "POST" || !isset($_POST['id_internship']) || !filter_var($_POST['id_internship'], FILTER_VALIDATE_INT)) { header("Location: internshipController.php?action=list&error=invalid_update_req"); exit(); }
 
              $idToUpdate = (int)$_POST['id_internship'];
-             $originalInternship = $internshipModel->read($idToUpdate); // Re-fetch for auth check
+             $originalInternship = $internshipModel->readInternship($idToUpdate); // Re-fetch for auth check
              if (!$originalInternship) { header("Location: internshipController.php?action=list&error=not_found_update"); exit(); }
 
              // Auth check based on original record
              $canModify = false;
              if ($loggedInUserRole === 'admin') { $canModify = true; }
              elseif ($loggedInUserRole === 'pilote' && isset($originalInternship['company_creator_id']) && $originalInternship['company_creator_id'] == $loggedInUserId) { $canModify = true; }
+             // Add check for internship creator
+             elseif ($loggedInUserRole === 'pilote' && isset($originalInternship['created_by_pilote_id']) && $originalInternship['created_by_pilote_id'] == $loggedInUserId) { $canModify = true; }
+             
              if (!$canModify) { header("Location: internshipController.php?action=list&error=" . urlencode("Permission denied (update).")); exit(); }
 
              // Get POST data
@@ -140,7 +148,7 @@ try { // Wrap main logic in try-catch
              }
 
              if (empty($errorMessage)) {
-                 $result = $internshipModel->update($idToUpdate, $id_company, $title, $description, $remuneration, $offre_date);
+                 $result = $internshipModel->updateInternship($idToUpdate, $id_company, $title, $description, $remuneration, $offre_date);
                  if ($result) { header("Location: internshipController.php?action=list&update=success"); exit(); }
                  else { $errorMessage = $internshipModel->getError() ?: "Error updating internship."; }
              }
@@ -166,13 +174,16 @@ try { // Wrap main logic in try-catch
              if ($_SERVER["REQUEST_METHOD"] !== "POST" || !isset($_POST['id']) || !filter_var($_POST['id'], FILTER_VALIDATE_INT)) { header("Location: internshipController.php?action=list&error=invalid_delete_req"); exit(); }
 
              $idToDelete = (int)$_POST['id'];
-             $internshipToDelete = $internshipModel->read($idToDelete); // Fetch to check ownership
+             $internshipToDelete = $internshipModel->readInternship($idToDelete); // Fetch to check ownership
              if (!$internshipToDelete) { header("Location: internshipController.php?action=list&error=not_found_delete"); exit(); }
 
              // Auth check
              $canDelete = false;
              if ($loggedInUserRole === 'admin') { $canDelete = true; }
              elseif ($loggedInUserRole === 'pilote' && isset($internshipToDelete['company_creator_id']) && $internshipToDelete['company_creator_id'] == $loggedInUserId) { $canDelete = true; }
+             // Add check for internship creator
+             elseif ($loggedInUserRole === 'pilote' && isset($internshipToDelete['created_by_pilote_id']) && $internshipToDelete['created_by_pilote_id'] == $loggedInUserId) { $canDelete = true; }
+             
              if (!$canDelete) { header("Location: internshipController.php?action=list&error=" . urlencode("Permission denied (delete).")); exit(); }
 
              // Delete
@@ -182,12 +193,28 @@ try { // Wrap main logic in try-catch
              break;
 
 
+        // --- CASE: View Internships (for Students) ---
+        case 'view':
+            $pageTitle = "Available Internship Offers";
+            
+            // Fetch all active internship offers for students
+            $internships = $internshipModel->readAll(); // Using readAll instead of readAllActive
+            if ($internships === false) {
+                $errorMessage = $internshipModel->getError() ?: "Error fetching internship offers.";
+                $internships = [];
+            }
+            
+            // Include the student view for internships
+            include __DIR__ . '/../View/viewOffersView.php';
+            exit();
+
         // --- CASE: Default/List View (GET for Admin/Pilote) ---
         case 'list':
         default:
              if ($loggedInUserRole !== 'admin' && $loggedInUserRole !== 'pilote') {
                  // If a student somehow requests action=list, redirect them
-                 header("Location: internshipController.php?action=view"); exit();
+                 header("Location: internshipController.php?action=view");
+                 exit();
              }
 
              $pageTitle = ($loggedInUserRole === 'admin') ? "Manage All Internships" : "Manage My Internships";
@@ -217,8 +244,11 @@ try { // Wrap main logic in try-catch
      error_log("Unhandled Exception in internshipController: " . $e->getMessage() . "\n" . $e->getTraceAsString());
      $errorMessage = "An unexpected system error occurred. Please report this issue.";
      // Determine which view to show based on role
-     if ($loggedInUserRole === 'student') { include __DIR__ . '/../View/viewOffersView.php'; }
-     else { include __DIR__ . '/../View/manageInternshipsView.php'; }
+     if ($loggedInUserRole === 'student') {
+         include __DIR__ . '/../View/viewOffersView.php';
+     } else {
+         include __DIR__ . '/../View/manageInternshipsView.php';
+     }
      exit();
 }
 ?>

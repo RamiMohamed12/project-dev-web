@@ -154,15 +154,20 @@ $defaultCompanyPic = 'images/default_company.png'; // ** Relative path from THIS
                                 <?php endif; ?>
                                 <td class="actions">
                                      <?php if ($canModify): ?>
-                                        <a href="internshipController.php?action=edit&id=<?= $offer['id_internship'] ?>" class="edit-btn" title="Edit Offer"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
-                                        <form method="post" action="internshipController.php" style="display: inline;" onsubmit="return confirm('Delete offer: <?= htmlspecialchars(addslashes($offer['title'])) ?>?');">
+                                        <a href="internshipController.php?action=edit&id=<?= $offer['id_internship'] ?>" class="edit-btn">
+                                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                                        </a>
+                                        
+                                        <form method="post" action="internshipController.php" style="display:inline;">
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="id" value="<?= $offer['id_internship'] ?>">
-                                            <button type="submit" class="delete-btn" title="Delete Offer"><i class="fa-solid fa-trash"></i> Delete</button>
+                                            <button type="submit" class="delete-btn" onclick="return confirm('Are you sure you want to delete this internship offer?');">
+                                                <i class="fa-solid fa-trash-alt"></i> Delete
+                                            </button>
                                         </form>
-                                    <?php else: ?>
-                                        <span>(View Only)</span>
-                                    <?php endif; ?>
+                                     <?php else: ?>
+                                        <span><i class="fa-solid fa-lock"></i> No permission</span>
+                                     <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

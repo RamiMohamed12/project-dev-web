@@ -3,205 +3,214 @@
 
 class Internship {
     private $conn;
-    private $table_name = "internship";
-    public $error = '';
+    private $error;
 
-    // Properties corresponding to table columns + JOINed data
-    public $id_internship;
-    public $id_company;
-    public $title;
-    public $description;
-    public $remuneration;
-    public $offre_date;
-    public $created_by_pilote_id;
-    public $created_at;
-    public $updated_at;
-
-    // Read-only properties from JOINs
-    public $company_name;
-    public $company_location;
-    public $company_picture_mime;
-    public $company_creator_id; // Crucial for authorization
-
-    public function __construct(PDO $db) {
+    public function __construct($db) {
         $this->conn = $db;
-        $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    }
-
-    private function sanitize($data) {
-        return is_scalar($data) ? htmlspecialchars(strip_tags((string)$data), ENT_QUOTES, 'UTF-8') : $data;
     }
 
     public function getError() {
         return $this->error;
     }
 
-    /**
-     * Creates a new internship offer.
-     * @param int $id_company
-     * @param string $title
-     * @param string $description
-     * @param float|null $remuneration
-     * @param string $offre_date (YYYY-MM-DD format)
-     * @param int|null $creatorPiloteId (ID of pilote creating, NULL if admin)
-     * @return int|false Last inserted ID on success, false on failure.
-     */
-    public function create($id_company, $title, $description, $remuneration, $offre_date, $creatorPiloteId = null) {
-        // Validation
-        if (empty($id_company) || empty($title) || empty($description) || empty($offre_date)) { $this->error = "Company, Title, Description, Offer Date required."; return false; }
-        // Consider adding date validation
-
-        $title = $this->sanitize($title);
-        $description = strip_tags($description); // Or allow specific HTML
-
-        $sql = "INSERT INTO " . $this->table_name . "
-                (id_company, title, description, remuneration, offre_date, created_by_pilote_id)
-                VALUES
-                (:id_company, :title, :description, :remuneration, :offre_date, :creator_id)";
-
+    // Get all internships with company details (for student view)
+    public function getAllInternshipsWithCompanyDetails($search = '', $sort = 'newest') {
         try {
+            $sql = "SELECT i.*, c.name_company, c.company_picture, c.company_picture_mime 
+                    FROM internship i
+                    JOIN company c ON i.id_company = c.id_company";
+            
+            // Add search condition if provided
+            if (!empty($search)) {
+                $sql .= " WHERE i.title LIKE :search OR i.location LIKE :search OR c.name_company LIKE :search";
+            }
+            
+            // Add sorting
+            switch ($sort) {
+                case 'oldest':
+                    $sql .= " ORDER BY i.offre_date ASC";
+                    break;
+                case 'salary_high':
+                    $sql .= " ORDER BY i.salary DESC";
+                    break;
+                case 'salary_low':
+                    $sql .= " ORDER BY i.salary ASC";
+                    break;
+                case 'newest':
+                default:
+                    $sql .= " ORDER BY i.offre_date DESC";
+                    break;
+            }
+            
             $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':id_company', $id_company, PDO::PARAM_INT);
-            $stmt->bindParam(':title', $title);
-            $stmt->bindParam(':description', $description);
-            if ($remuneration === null || $remuneration === '') { $stmt->bindValue(':remuneration', null, PDO::PARAM_NULL); }
-            else { $stmt->bindParam(':remuneration', $remuneration); }
-            $stmt->bindParam(':offre_date', $offre_date);
-            if ($creatorPiloteId !== null) { $stmt->bindParam(':creator_id', $creatorPiloteId, PDO::PARAM_INT); }
-            else { $stmt->bindValue(':creator_id', null, PDO::PARAM_NULL); }
-
-            if ($stmt->execute()) {
-                return $this->conn->lastInsertId();
+            
+            // Bind search parameter if provided
+            if (!empty($search)) {
+                $searchParam = '%' . $search . '%';
+                $stmt->bindParam(':search', $searchParam);
             }
-            $this->error = "Failed to execute statement."; return false;
+            
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            $this->error = "DB error creating internship.";
-            if (strpos($e->getMessage(), 'foreign key constraint fails') !== false) {
-                 if (strpos($e->getMessage(), 'id_company')) { $this->error = "Invalid Company selected."; }
-                 if (strpos($e->getMessage(), 'created_by_pilote_id')) { $this->error = "Invalid Creator ID."; }
-            }
-            error_log("DB Error create Internship: " . $e->getMessage()); return false;
+            $this->error = 'Error retrieving internships.';
+            error_log("DB Error getAllInternshipsWithCompanyDetails: " . $e->getMessage());
+            return [];
         }
     }
 
-    /**
-     * Reads details of a single internship, joining company info.
-     * @param int $id_internship
-     * @return array|false Associative array of internship details or false.
-     */
-    public function read($id_internship) {
-        // Selects necessary fields including company details needed for display & auth
-        $sql = "SELECT
-                    i.*, -- Select all from internship table
-                    c.name_company, c.location AS company_location,
-                    c.company_picture_mime, -- For potential display
-                    c.created_by_pilote_id AS company_creator_id -- Needed for Pilote Auth
-                FROM " . $this->table_name . " i
-                LEFT JOIN company c ON i.id_company = c.id_company
-                WHERE i.id_internship = :id_internship
-                LIMIT 1";
+    // Add other existing methods here...
+    
+    // Read a single internship with company details
+    public function readInternship($id_internship) {
         try {
+            $sql = "SELECT i.*, c.name_company, c.company_picture, c.company_picture_mime 
+                    FROM internship i
+                    JOIN company c ON i.id_company = c.id_company
+                    WHERE i.id_internship = :id_internship";
             $stmt = $this->conn->prepare($sql);
             $stmt->bindParam(':id_internship', $id_internship, PDO::PARAM_INT);
             $stmt->execute();
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$row) { $this->error = "Internship not found."; return false; }
-            return $row; // Return the full array
-        } catch (PDOException $e) { $this->error = "DB error reading internship."; error_log("DB Error read Internship (ID: $id_internship): " . $e->getMessage()); return false; }
-    }
-
-    /**
-     * Reads all internships, joining basic company info (no BLOBs).
-     * Filters based on company ownership if an array of allowed company IDs is provided.
-     * @param array|null $allowedCompanyIds Array of company IDs the user is allowed to see offers for (e.g., owned by pilote). Null means no restriction (admin or student view).
-     * @return array|false Array of internships or false on error.
-     */
-    public function readAll(array $allowedCompanyIds = null) {
-        // Exclude company picture BLOB
-        $sql = "SELECT
-                    i.id_internship, i.id_company, i.title, i.description, i.remuneration, i.offre_date,
-                    i.created_by_pilote_id, i.created_at,
-                    c.name_company, c.location AS company_location, c.company_picture_mime,
-                    c.created_by_pilote_id AS company_creator_id
-                FROM " . $this->table_name . " i
-                LEFT JOIN company c ON i.id_company = c.id_company";
-
-        $params = [];
-        // If filtering by allowed companies (typically for a Pilote)
-        if ($allowedCompanyIds !== null) {
-            if (empty($allowedCompanyIds)) { return []; } // Return empty if pilote owns no companies
-            // Create placeholders for IN clause: ?,?,?
-            $placeholders = implode(',', array_fill(0, count($allowedCompanyIds), '?'));
-            $sql .= " WHERE i.id_company IN (" . $placeholders . ")";
-            $params = $allowedCompanyIds; // Parameters for the IN clause
-        }
-
-        $sql .= " ORDER BY i.offre_date DESC, i.created_at DESC";
-
-        try {
-            $stmt = $this->conn->prepare($sql);
-            // Execute with parameters if filtering, otherwise execute without
-            $stmt->execute($params);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            $this->error = "DB error fetching internships.";
-            error_log("DB Error readAll Internships: " . $e->getMessage());
+            $this->error = 'Error reading internship.';
+            error_log("DB Error readInternship (ID: $id_internship): " . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * Updates an existing internship offer.
-     * @param int $id_internship
-     * @param int $id_company
-     * @param string $title
-     * @param string $description
-     * @param float|null $remuneration
-     * @param string $offre_date
-     * @return bool True on success, false on failure.
+     * Read all internships
+     * 
+     * @param array|null $allowedCompanyIds Optional array of company IDs to filter by (for pilotes)
+     * @return array|false Returns an array of internships or false on failure
      */
-    public function update($id_internship, $id_company, $title, $description, $remuneration, $offre_date) {
-        // Validation
-         if (empty($id_internship) || empty($id_company) || empty($title) || empty($description) || empty($offre_date)) { $this->error = "Required fields missing."; return false; }
-        $title = $this->sanitize($title); $description = strip_tags($description);
-
-        $sql = "UPDATE " . $this->table_name . "
-                SET id_company = :id_company, title = :title, description = :description,
-                    remuneration = :remuneration, offre_date = :offre_date
-                WHERE id_internship = :id_internship";
+    public function readAll($allowedCompanyIds = null) {
         try {
+            $sql = "SELECT i.*, c.name_company, c.company_picture, c.company_picture_mime 
+                    FROM internship i
+                    JOIN company c ON i.id_company = c.id_company";
+            
+            // If we need to filter by allowed company IDs (for pilotes)
+            if ($allowedCompanyIds !== null) {
+                if (empty($allowedCompanyIds)) {
+                    // No companies to show
+                    return [];
+                }
+                $placeholders = implode(',', array_fill(0, count($allowedCompanyIds), '?'));
+                $sql .= " WHERE i.id_company IN ($placeholders)";
+            }
+            
+            $sql .= " ORDER BY i.offre_date DESC";
+            
+            $stmt = $this->conn->prepare($sql);
+            
+            // Bind company ID parameters if filtering
+            if ($allowedCompanyIds !== null && !empty($allowedCompanyIds)) {
+                $paramIndex = 1;
+                foreach ($allowedCompanyIds as $companyId) {
+                    $stmt->bindValue($paramIndex++, $companyId, PDO::PARAM_INT);
+                }
+            }
+            
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            $this->error = "Error retrieving internships: " . $e->getMessage();
+            error_log("DB Error readAll: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    // Add this method to your Internship class
+    
+    /**
+     * Create a new internship offer
+     * 
+     * @param int $id_company The company ID offering the internship
+     * @param string $title The title of the internship
+     * @param string $description The description of the internship
+     * @param float|null $remuneration The remuneration amount (can be null)
+     * @param string $offre_date The date the offer was posted
+     * @param int|null $creatorPiloteId The ID of the pilote who created this (null for admin)
+     * @return int|bool The new internship ID on success, false on failure
+     */
+    public function create($id_company, $title, $description, $remuneration, $offre_date, $creatorPiloteId = null) {
+        try {
+            $sql = "INSERT INTO internship (id_company, title, description, remuneration, offre_date, created_by_pilote_id) 
+                    VALUES (:id_company, :title, :description, :remuneration, :offre_date, :created_by_pilote_id)";
+            
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':id_company', $id_company, PDO::PARAM_INT);
+            $stmt->bindParam(':title', $title, PDO::PARAM_STR);
+            $stmt->bindParam(':description', $description, PDO::PARAM_STR);
+            $stmt->bindParam(':remuneration', $remuneration, PDO::PARAM_STR);
+            $stmt->bindParam(':offre_date', $offre_date, PDO::PARAM_STR);
+            $stmt->bindParam(':created_by_pilote_id', $creatorPiloteId, PDO::PARAM_INT);
+            
+            $stmt->execute();
+            return $this->conn->lastInsertId();
+        } catch (PDOException $e) {
+            $this->error = "Database error: " . $e->getMessage();
+            error_log("Internship create error: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Delete an internship offer
+     * 
+     * @param int $id_internship The ID of the internship to delete
+     * @return bool True on success, false on failure
+     */
+    public function delete($id_internship) {
+        try {
+            $sql = "DELETE FROM internship WHERE id_internship = :id_internship";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':id_internship', $id_internship, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            $this->error = "Error deleting internship: " . $e->getMessage();
+            error_log("DB Error delete internship (ID: $id_internship): " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Update an existing internship offer
+     * 
+     * @param int $id_internship The ID of the internship to update
+     * @param int $id_company The company ID offering the internship
+     * @param string $title The title of the internship
+     * @param string $description The description of the internship
+     * @param float|null $remuneration The remuneration amount (can be null)
+     * @param string $offre_date The date the offer was posted
+     * @return bool True on success, false on failure
+     */
+    public function updateInternship($id_internship, $id_company, $title, $description, $remuneration, $offre_date) {
+        try {
+            $sql = "UPDATE internship 
+                    SET id_company = :id_company, 
+                        title = :title, 
+                        description = :description, 
+                        remuneration = :remuneration, 
+                        offre_date = :offre_date
+                    WHERE id_internship = :id_internship";
+            
             $stmt = $this->conn->prepare($sql);
             $stmt->bindParam(':id_internship', $id_internship, PDO::PARAM_INT);
             $stmt->bindParam(':id_company', $id_company, PDO::PARAM_INT);
-            $stmt->bindParam(':title', $title); $stmt->bindParam(':description', $description);
-            if ($remuneration === null || $remuneration === '') { $stmt->bindValue(':remuneration', null, PDO::PARAM_NULL); } else { $stmt->bindParam(':remuneration', $remuneration); }
-            $stmt->bindParam(':offre_date', $offre_date);
-            $stmt->execute();
-            return $stmt->rowCount() > 0; // True if rows were affected
+            $stmt->bindParam(':title', $title, PDO::PARAM_STR);
+            $stmt->bindParam(':description', $description, PDO::PARAM_STR);
+            $stmt->bindParam(':remuneration', $remuneration, PDO::PARAM_STR);
+            $stmt->bindParam(':offre_date', $offre_date, PDO::PARAM_STR);
+            
+            return $stmt->execute();
         } catch (PDOException $e) {
-            $this->error = "DB error updating internship.";
-             if (strpos($e->getMessage(), 'foreign key constraint fails') !== false && strpos($e->getMessage(), 'id_company') !== false) { $this->error = "Invalid Company selected."; }
-            error_log("DB Error update Internship (ID: $id_internship): " . $e->getMessage()); return false;
+            $this->error = "Error updating internship: " . $e->getMessage();
+            error_log("DB Error updateInternship (ID: $id_internship): " . $e->getMessage());
+            return false;
         }
     }
-
-    /**
-     * Deletes an internship offer.
-     * @param int $id_internship
-     * @return bool True on success, false on failure.
-     */
-    public function delete($id_internship) {
-        if (empty($id_internship)) { $this->error = "Internship ID required."; return false; }
-        $sql = "DELETE FROM " . $this->table_name . " WHERE id_internship = :id_internship";
-        try {
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':id_internship', $id_internship, PDO::PARAM_INT);
-            $stmt->execute(); return $stmt->rowCount() > 0;
-        } catch (PDOException $e) {
-            $this->error = "DB error deleting internship.";
-             if (strpos($e->getMessage(), 'foreign key constraint fails') !== false) { $this->error = "Cannot delete offer with existing applications/wishlist items."; }
-            error_log("DB Error delete Internship (ID: $id_internship): " . $e->getMessage()); return false;
-        }
-    }
-} // End Class Internship
+}
 ?>
