@@ -113,7 +113,7 @@ if (isset($_GET['profile_update']) && $_GET['profile_update'] == 'success') {
                  <li><a href="admin.php" class="active">Dashboard</a></li>
                  <li><a href="../Controller/userController.php">Manage Users</a></li>
                  <li><a href="../Controller/companyController.php">Manage Companies</a></li>
-                 <li><a href="../Controller/offerController.php">Manage Offers</a></li>
+                 <li><a href="../Controller/internshipController.php">Manage Offers</a></li>
                  <?php if ($loggedInUserId): ?>
                     <li><a href="../Controller/editUser.php?id=<?= $loggedInUserId ?>&type=admin">My Profile</a></li>
                  <?php endif; ?>
@@ -140,7 +140,7 @@ if (isset($_GET['profile_update']) && $_GET['profile_update'] == 'success') {
         <div class="dashboard-actions">
              <a href="../Controller/userController.php"><i class="fa-solid fa-users-gear"></i> Manage All Users</a>
              <a href="../Controller/companyController.php"><i class="fa-solid fa-building"></i> Manage All Companies</a>
-             <a href="../Controller/offerController.php"><i class="fa-solid fa-file-alt"></i> Manage Offers</a>
+             <a href="../Controller/internshipController.php"><i class="fa-solid fa-file-alt"></i> Manage Offers</a>
              <?php if ($loggedInUserId): ?>
                  <a href="../Controller/editUser.php?id=<?= $loggedInUserId ?>&type=admin"><i class="fa-solid fa-user-pen"></i> Edit My Profile</a>
              <?php endif; ?>
