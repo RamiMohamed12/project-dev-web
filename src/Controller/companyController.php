@@ -1,128 +1,147 @@
 <?php
+// Location: /home/demy/project-dev-web/src/Controller/companyController.php
 
+// --- Required Includes & Session Start ---
 require_once __DIR__ . '/../../config/config.php';
-require_once __DIR__ . '/../Model/company.php';
+require_once __DIR__ . '/../Model/company.php'; // Use Company model
+require_once __DIR__ . '/../Auth/AuthSession.php';
+// require_once __DIR__ . '/../Auth/AuthCheck.php'; // Specific checks done below
 
-$company = new Company($conn);
+if (session_status() == PHP_SESSION_NONE) { session_start(); }
 
-// Handle form submissions
+// --- Basic Auth Check & Role/ID ---
+if (!AuthSession::isUserLoggedIn()) { header("Location: ../View/login.php?error=" . urlencode("Auth required.")); exit(); }
+$loggedInUserRole = AuthSession::getUserData('user_role');
+$loggedInUserId = AuthSession::getUserData('user_id');
+if ($loggedInUserRole !== 'admin' && $loggedInUserRole !== 'pilote') { AuthSession::destroySession(); header("Location: ../View/login.php?error=" . urlencode("Access Denied.")); exit(); }
+
+// --- Instantiate Model ---
+try { $companyModel = new Company($conn); }
+catch (Exception $e) { error_log("Company controller model error: " . $e->getMessage()); die("Critical error (CCM)."); }
+
+// --- Init View Vars ---
+$companies = [];
+$pageTitle = "Company Management";
+$errorMessage = ''; // Initialize empty
+$successMessage = ''; // Initialize empty
+
+// Check for messages passed via GET params from redirects
+if(isset($_GET['update']) && $_GET['update'] == 'success') { $successMessage = "Company updated successfully."; }
+if(isset($_GET['delete']) && $_GET['delete'] == 'success') { $successMessage = "Company deleted successfully."; }
+if(isset($_GET['add']) && $_GET['add'] == 'success') { $successMessage = "Company added successfully."; }
+if(isset($_GET['error'])) { $errorMessage = htmlspecialchars(urldecode($_GET['error'])); }
+
+
+// --- Handle POST Actions (Add, Delete) ---
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
     $action = $_POST['action'];
 
+    // --- ACTION: Add Company ---
     if ($action == 'add') {
-        $name = isset($_POST['name']) ? htmlspecialchars(trim($_POST['name'])) : '';
-        $location = isset($_POST['location']) ? htmlspecialchars(trim($_POST['location'])) : '';
-        $description = isset($_POST['description']) ? htmlspecialchars(trim($_POST['description'])) : '';
-        $email = isset($_POST['email']) ? htmlspecialchars(trim($_POST['email'])) : '';
-        $phone = isset($_POST['phone']) ? htmlspecialchars(trim($_POST['phone'])) : '';
+        // Retrieve all potential fields
+        $name = $_POST['name'] ?? '';
+        $location = $_POST['location'] ?? '';
+        $description = $_POST['description'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $phone = $_POST['phone'] ?? '';
+        $url = $_POST['url'] ?? null; // ***** GET URL FIELD *****
 
-        // Validate phone number using regex
-        if (!preg_match('/^\d+$/', $phone)) {
-            echo "Error: Phone number must contain only numbers.";
-            exit();
-        }
+        $creatorPiloteId = ($loggedInUserRole === 'pilote') ? $loggedInUserId : null;
 
-        if ($company->create($name, $location, $description, $email, $phone)) {
-            header("Location: " . $_SERVER['PHP_SELF']); // Redirect to the same page
-            exit();
+        // Basic required field validation
+        if (empty($name) || empty($location) || empty($email) || empty($phone)) {
+             $errorMessage = "Error: Name, Location, Email, and Phone are required.";
         } else {
-            echo "Error: Could not add company. " . $company->error;
-        }
-    } elseif ($action == 'delete') {
-        $id = (int) $_POST['id'];
+            // Attempt to create the company (model handles further validation like email/url format)
+            $result = $companyModel->create(
+                $name, $location, $description, $email, $phone,
+                $url, // ***** PASS URL TO MODEL *****
+                $creatorPiloteId
+            );
 
-        if ($company->delete($id)) {
-            header("Location: " . $_SERVER['PHP_SELF']); // Redirect to the same page
-            exit();
-        } else {
-            echo "Error: Could not delete company. " . $company->error;
+            if ($result) {
+                header("Location: " . $_SERVER['PHP_SELF'] . "?add=success"); // Redirect on success
+                exit();
+            } else {
+                // If create failed, get error from model
+                $errorMessage = $companyModel->getError() ?: "Error: Could not add company. Please check details.";
+            }
         }
     }
+    // --- ACTION: Delete Company ---
+    elseif ($action == 'delete') {
+        $idToDelete = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+
+        if ($idToDelete <= 0) {
+             $errorMessage = "Error: Invalid ID provided for deletion.";
+        } else {
+            // Authorization check before deleting
+            $allowedToDelete = false;
+            $companyDetails = null;
+            try {
+                $companyDetails = $companyModel->read($idToDelete); // Fetch details to check owner
+            } catch (Exception $e) {
+                error_log("Error fetching company for delete check (ID: $idToDelete): " . $e->getMessage());
+                $errorMessage="Error verifying company before deletion.";
+            }
+
+            if (!$companyDetails && empty($errorMessage)) { // Check if fetch worked and company exists
+                 $errorMessage = "Error: Company not found (ID: $idToDelete).";
+            } elseif (empty($errorMessage)) { // Only proceed if fetch worked
+                 if ($loggedInUserRole === 'admin') {
+                     $allowedToDelete = true; // Admins can delete any
+                } elseif ($loggedInUserRole === 'pilote') {
+                    // Pilotes can delete only if 'created_by_pilote_id' matches their ID
+                    if (isset($companyDetails['created_by_pilote_id']) && $companyDetails['created_by_pilote_id'] == $loggedInUserId) {
+                        $allowedToDelete = true;
+                    } else {
+                        $errorMessage = "Error: You do not have permission to delete this company.";
+                    }
+                }
+            }
+
+
+            if ($allowedToDelete) { // Proceed only if authorized
+                $result = $companyModel->delete($idToDelete);
+                 if ($result) {
+                    header("Location: " . $_SERVER['PHP_SELF'] . "?delete=success"); // Redirect on success
+                    exit();
+                } else {
+                    // Get error (could be DB error or constraint violation)
+                    $errorMessage = $companyModel->getError() ?: "Error: Could not delete company.";
+                }
+            } elseif(empty($errorMessage)) { // If not allowed but no specific error set
+                $errorMessage = "Error: Permission denied to delete this company.";
+            }
+        } // End ID check
+    } // End delete action
+} // End POST handling
+
+
+// --- Fetch Data for Display (GET request or after failed POST) ---
+try {
+    if ($loggedInUserRole === 'admin') {
+        $companies = $companyModel->readAll(); // Admin gets all
+         $pageTitle = "Manage All Companies";
+    } elseif ($loggedInUserRole === 'pilote') {
+        $companies = $companyModel->readAll($loggedInUserId); // Pilote gets only their own
+         $pageTitle = "Manage My Companies";
+    }
+
+    // Check if readAll returned false (indicating an error)
+    if ($companies === false) {
+        $errorMessage = $companyModel->getError() ?: "Error fetching company data."; // Get specific error if available
+        error_log("Error in companyController fetching data: " . $errorMessage);
+        $companies = []; // Ensure $companies is an empty array for the view
+    }
+
+} catch (Exception $e) {
+     error_log("Exception fetching company data in companyController: " . $e->getMessage());
+     $errorMessage = "An unexpected error occurred while retrieving the company list.";
+     $companies = []; // Ensure $companies is an empty array
 }
 
-// Fetch all companies to display in the table
-$companies = $company->readAll();
-
+// --- Include the View ---
+// Pass necessary variables to the view file
+include __DIR__ . '/../View/manageCompaniesView.php';
 ?>
-
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Manage Companies</title>
-    <link rel="stylesheet" type="text/css" href="../View/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-</head>
-<body>
-    <div class="form-container">
-        <h2>Add Company</h2>
-        <form method="post" action="">
-            <input type="hidden" name="action" value="add">
-            <div class="form-group">
-                <label for="name">Name:</label>
-                <input type="text" name="name" placeholder="Name" required>
-            </div>
-            <div class="form-group">
-                <label for="location">Location:</label>
-                <input type="text" name="location" placeholder="Location" required>
-            </div>
-            <div class="form-group">
-                <label for="description">Description:</label>
-                <textarea name="description" placeholder="Description" required></textarea>
-            </div>
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" name="email" placeholder="Email" required>
-            </div>
-            <div class="form-group">
-                <label for="phone">Phone:</label>
-                <input type="text" name="phone" placeholder="Phone" required>
-            </div>
-            <button type="submit">Add Company</button>
-        </form>
-    </div>
-
-    <div class="table-container">
-        <h2>Company List</h2>
-        <table border="1" cellpadding="10" cellspacing="0">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Location</th>
-                    <th>Description</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($companies)): ?>
-                    <?php foreach ($companies as $company): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($company['id_company']) ?></td>
-                            <td><?= htmlspecialchars($company['name_company']) ?></td>
-                            <td><?= htmlspecialchars($company['location']) ?></td>
-                            <td><?= htmlspecialchars($company['description']) ?></td>
-                            <td><?= htmlspecialchars($company['email']) ?></td>
-                            <td><?= htmlspecialchars($company['phone_number']) ?></td>
-                            <td>
-                                <form method="post" action="" style="display: inline;">
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="id" value="<?= $company['id_company'] ?>">
-                                    <button type="submit" onclick="return confirm('Are you sure you want to delete this company?');">Delete</button>
-                                </form>
-                                <a href="editCompany.php?id=<?= $company['id_company'] ?>">Edit</a>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="7">No companies found.</td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
-</body>
-</html>

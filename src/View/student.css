@@ -1,0 +1,23 @@
+ /* Basic Styles - Add or modify as needed */
+ body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; }
+ header { background-color: #17a2b8; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+ header h1 { margin: 0; font-size: 1.5em; display: flex; align-items: center; }
+ .profile-pic-header { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px; border: 1px solid #138496;}
+ nav ul { list-style: none; margin: 0; padding: 0; display: flex; }
+ nav ul li { margin-left: 15px; }
+ nav ul li a { color: #f8f9fa; text-decoration: none; padding: 5px 10px; transition: background-color 0.2s ease; }
+ nav ul li a:hover, nav ul li a.active { color: #ffffff; background-color: #138496; border-radius: 4px; }
+ main { padding: 20px; max-width: 1200px; margin: 20px auto; }
+ footer { text-align: center; margin-top: 30px; padding: 15px; background-color: #e9ecef; color: #6c757d; font-size: 0.9em; border-top: 1px solid #dee2e6;}
+ .user-info { background-color: #ffffff; border: 1px solid #dee2e6; padding: 20px; margin-bottom: 25px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+ .user-info .profile-pic-large { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; float: left; margin: 0 20px 10px 0; border: 3px solid #afe1e9; }
+ .user-info h2 { margin-top: 0; margin-bottom: 15px; }
+ .user-info p { margin-bottom: 8px; color: #495057; }
+ .user-info strong { color: #212529; }
+ .dashboard-actions { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+ .dashboard-actions a { display: inline-block; margin: 5px 10px 5px 0; padding: 10px 15px; background-color: #17a2b8; color: white; text-decoration: none; border-radius: 4px; transition: background-color 0.2s ease; font-size: 0.95em; }
+ .dashboard-actions a:hover { background-color: #117a8b; }
+ .dashboard-actions a i { margin-right: 7px; }
+ /* Message Styles */
+ .message { padding: 12px 15px; margin-bottom: 20px; border-radius: 4px; border: 1px solid transparent; }
+ .success-message { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
