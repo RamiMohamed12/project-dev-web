@@ -162,5 +162,30 @@ class Company {
             return false;
         }
     }
+    // Inside your Company model (src/Model/company.php)
+public function getCompanyAverageRating($company_id) {
+    try {
+        $sql = "SELECT AVG(rating_value) as average, COUNT(*) as count
+                FROM company_ratings
+                WHERE company_id = :company_id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':company_id', $company_id, PDO::PARAM_INT);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Return both average and count, handle case with no ratings
+        return [
+            'average' => ($result && $result['count'] > 0) ? round((float)$result['average'], 2) : null,
+            'count' => ($result) ? (int)$result['count'] : 0
+        ];
+    } catch (PDOException $e) {
+        $this->error = "Error getting average rating: " . $e->getMessage();
+        error_log($this->error);
+        return ['average' => null, 'count' => 0];
+    }
 }
+
+
+}
+
+
 ?>
