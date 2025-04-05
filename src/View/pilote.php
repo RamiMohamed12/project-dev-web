@@ -912,12 +912,7 @@ $currentPage = 'Dashboard';
                         <span>Manage Offers</span>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="../Controller/offerController.php?action=view" class="nav-link">
-                        <i class="fas fa-briefcase"></i>
-                        <span>Browse Offers</span>
-                    </a>
-                </li>
+                
                 <?php if ($loggedInUserId): ?>
                 <li class="nav-item">
                     <a href="../Controller/editUser.php?id=<?= $loggedInUserId ?>&type=pilote" class="nav-link">
@@ -926,12 +921,7 @@ $currentPage = 'Dashboard';
                     </a>
                 </li>
                 <?php endif; ?>
-                <li class="nav-item">
-                    <a href="../Controller/settingsController.php" class="nav-link">
-                        <i class="fas fa-cog"></i>
-                        <span>Settings</span>
-                    </a>
-                </li>
+                
             </ul>
             
             <div class="sidebar-footer">

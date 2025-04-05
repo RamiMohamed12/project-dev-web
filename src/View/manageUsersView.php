@@ -28,9 +28,6 @@ function prepare_data_for_js($data_array, $fields_to_escape = []) {
             if (isset($processed_item[$field]) && is_string($processed_item[$field])) {
                 // Replace various newline types with escaped newline for JS
                 $processed_item[$field] = str_replace(["\r\n", "\r", "\n"], '\\n', $processed_item[$field]);
-                // You could add other replacements here if needed, e.g., for problematic quotes
-                // $processed_item[$field] = str_replace("'", "\\'", $processed_item[$field]);
-                // $processed_item[$field] = str_replace('"', '\\"', $processed_item[$field]); // json_encode handles quotes well usually
             }
         }
         $processed_array[] = $processed_item;
@@ -69,7 +66,6 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             --text-secondary-light: #4a5568;
             --card-border-light: #e2e8f0;
             --card-shadow-light: 0 4px 20px rgba(0, 0, 0, 0.05);
-            --navbar-bg-light: rgba(255, 255, 255, 0.8);
             --gradient-primary-light: linear-gradient(135deg, #6366f1, #8b5cf6);
             --gradient-accent-light: linear-gradient(135deg, #3b82f6, #2dd4bf);
             --input-bg-light: #f1f5f9;
@@ -80,7 +76,7 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             --bg-dots-light: rgba(99, 102, 241, 0.15);
             --glass-bg-light: rgba(255, 255, 255, 0.7);
             --glass-border-light: rgba(255, 255, 255, 0.5);
-            
+
             /* Dark Theme Colors */
             --bg-primary-dark: #13151e;
             --bg-secondary-dark: #1a1e2c;
@@ -88,7 +84,6 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             --text-secondary-dark: #a0aec0;
             --card-border-dark: #2d3748;
             --card-shadow-dark: 0 4px 20px rgba(0, 0, 0, 0.2);
-            --navbar-bg-dark: rgba(26, 30, 44, 0.8);
             --gradient-primary-dark: linear-gradient(135deg, #6366f1, #8b5cf6);
             --gradient-accent-dark: linear-gradient(135deg, #3b82f6, #2dd4bf);
             --input-bg-dark: #2d3748;
@@ -99,7 +94,7 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             --bg-dots-dark: rgba(139, 92, 246, 0.15);
             --glass-bg-dark: rgba(26, 30, 44, 0.7);
             --glass-border-dark: rgba(45, 55, 72, 0.5);
-            
+
             /* Active theme (default to light) */
             --bg-primary: var(--bg-primary-light);
             --bg-secondary: var(--bg-secondary-light);
@@ -123,30 +118,32 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-primary);
             color: var(--text-primary);
             min-height: 100vh;
             position: relative;
-            overflow-x: hidden;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            /* Add padding top to prevent content from hiding under the fixed button */
+            padding-top: 80px; /* Adjust value based on button height + desired spacing */
         }
 
-        /* Main Layout */
+        /* Main Layout - Removed sidebar flex */
         .main-wrapper {
-            display: flex;
+            display: block; /* Changed from flex */
             min-height: 100vh;
         }
-        
-        /* Background elements */
+
+        /* Background elements (Keep these) */
         .bg-gradient-spot {
             position: fixed;
             border-radius: 50%;
             filter: blur(80px);
             z-index: -1;
         }
-        
+
         .bg-gradient-spot-1 {
             width: 40vw;
             height: 40vw;
@@ -154,7 +151,7 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             top: -10%;
             left: -10%;
         }
-        
+
         .bg-gradient-spot-2 {
             width: 30vw;
             height: 30vw;
@@ -162,7 +159,7 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             bottom: -5%;
             right: -5%;
         }
-        
+
         .bg-grid {
             position: fixed;
             top: 0;
@@ -170,161 +167,65 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             width: 100%;
             height: 100%;
             background-size: 40px 40px;
-            background-image: 
-                radial-gradient(circle, var(--bg-dots-light) 1px, transparent 1px);
+            background-image: radial-gradient(circle, var(--bg-dots-light) 1px, transparent 1px);
             z-index: -1;
             opacity: 0.4;
         }
 
-        /* Sidebar styles */
-        .sidebar {
-            width: 280px;
-            min-height: 100vh;
-            padding: 2rem 1.5rem;
-            position: fixed;
-            left: 0;
-            top: 0;
-            z-index: 100;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-right: 1px solid var(--glass-border);
-        }
-        
-        .sidebar-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2.5rem;
-            padding: 0 0.5rem;
-        }
-        
-        .sidebar-header img {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--card-border);
-            margin-right: 1rem;
-        }
-        
-        .sidebar-header h3 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 0;
-        }
-        
-        .sidebar-header p {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin: 0;
-        }
-        
-        .nav-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            flex-grow: 1;
-        }
-        
-        .nav-item {
-            margin-bottom: 0.5rem;
-        }
-        
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 1rem 1.25rem;
-            border-radius: 16px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-        
-        .nav-link i {
-            margin-right: 1rem;
-            font-size: 1.2rem;
-            width: 24px;
-            text-align: center;
-        }
-        
-        .nav-link:hover, .nav-link.active {
-            color: white;
-            background: var(--gradient-primary);
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-            transform: translateY(-3px);
-        }
-        
-        .sidebar-footer {
-            margin-top: auto;
-            padding: 1rem 0.5rem;
-        }
-        
-        .logout-btn {
-            display: flex;
-            align-items: center;
-            padding: 1rem 1.25rem;
-            border-radius: 16px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            border: 1px solid var(--card-border);
-        }
-        
-        .logout-btn i {
-            margin-right: 1rem;
-        }
-        
-        .logout-btn:hover {
-            color: #ef4444;
-            background-color: rgba(239, 68, 68, 0.1);
-            border-color: rgba(239, 68, 68, 0.3);
-        }
+        /* --- REMOVED SIDEBAR STYLES --- */
 
-        /* Main content */
+        /* Main content - Centered */
         .main-container {
-            flex: 1;
-            margin-left: 280px;
+            /* Removed margin-left */
             padding: 2rem;
-            min-height: 100vh;
+            /* Removed min-height: 100vh as body now handles it */
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: var(--text-secondary) transparent;
+            max-width: 1140px; /* Max width for content */
+            margin-left: auto; /* Center the container */
+            margin-right: auto; /* Center the container */
         }
-        
+
+        /* Main container scrollbar styling (keep if desired) */
         .main-container::-webkit-scrollbar {
             width: 6px;
         }
-        
         .main-container::-webkit-scrollbar-track {
             background: transparent;
         }
-        
         .main-container::-webkit-scrollbar-thumb {
             background-color: var(--text-secondary);
             border-radius: 10px;
         }
 
-        /* Header styles */
+        /* Center the main content blocks within the main-container */
+        .page-header,
+        .message,
+        .card
+        /* .dashboard-button-container - NO LONGER HERE */
+        {
+            width: 100%; /* Take full width of the centered container */
+            /* No need for max-width or margin:auto here anymore as main-container is centered */
+        }
+
+        /* Header styles (Keep) */
         .page-header {
             margin-bottom: 1.5rem;
             display: flex;
-            justify-content: space-between;
+            justify-content: space-between; /* Will now just align the title block */
             align-items: center;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 1rem;
         }
-        
+
         .page-header h1 {
             font-size: 1.8rem;
             font-weight: 700;
             margin: 0;
             color: var(--text-primary);
         }
-        
+
         .page-header .breadcrumb {
             display: flex;
             list-style: none;
@@ -333,29 +234,29 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             font-size: 0.9rem;
             color: var(--text-secondary);
         }
-        
+
         .page-header .breadcrumb li {
             display: flex;
             align-items: center;
         }
-        
+
         .page-header .breadcrumb li:not(:last-child)::after {
             content: '/';
             margin: 0 0.5rem;
             color: var(--text-secondary);
         }
-        
+
         .page-header .breadcrumb a {
             color: var(--text-secondary);
             text-decoration: none;
             transition: color 0.3s ease;
         }
-        
+
         .page-header .breadcrumb a:hover {
             color: var(--text-primary);
         }
 
-        /* Alert/message styling */
+        /* Alert/message styling (Keep) */
         .message {
             padding: 1rem 1.25rem;
             margin-bottom: 1.5rem;
@@ -365,25 +266,25 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             animation: fadeUp 0.6s ease forwards;
             border: 1px solid transparent;
         }
-        
+
         .message i {
             margin-right: 0.75rem;
             font-size: 1.25rem;
         }
-        
+
         .error-message {
             background-color: rgba(239, 68, 68, 0.1);
             color: #ef4444;
             border-color: rgba(239, 68, 68, 0.2);
         }
-        
+
         .success-message {
             background-color: rgba(34, 197, 94, 0.1);
             color: #22c55e;
             border-color: rgba(34, 197, 94, 0.2);
         }
 
-        /* Card styling */
+        /* Card styling (Keep) */
         .card {
             background: var(--bg-secondary);
             border-radius: 16px;
@@ -392,7 +293,7 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             overflow: hidden;
             margin-bottom: 1.5rem;
         }
-        
+
         .card-header {
             background: var(--input-bg);
             padding: 1.25rem 1.5rem;
@@ -401,7 +302,7 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .card-header h2 {
             font-size: 1.25rem;
             font-weight: 600;
@@ -410,33 +311,33 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             display: flex;
             align-items: center;
         }
-        
+
         .card-header h2 i {
             margin-right: 0.75rem;
         }
-        
+
         .card-body {
             padding: 1.5rem;
         }
-        
+
         .card-footer {
             background: var(--input-bg);
             border-top: 1px solid var(--card-border);
             padding: 1rem 1.5rem;
         }
 
-        /* Form styling */
+        /* Form styling (Keep) */
         .form-group {
             margin-bottom: 1.5rem;
         }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 600;
             color: var(--text-primary);
         }
-        
+
         .form-control {
             width: 100%;
             padding: 0.75rem 1rem;
@@ -447,13 +348,13 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             color: var(--text-primary);
             transition: all 0.3s ease;
         }
-        
+
         .form-control:focus {
             border-color: #6366f1;
             outline: none;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
         }
-        
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -466,23 +367,23 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             border: none;
             cursor: pointer;
         }
-        
+
         .btn i {
             margin-right: 0.5rem;
         }
-        
+
         .btn-primary {
             background: var(--gradient-primary);
             color: white;
             box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
         }
-        
+
         .btn-primary:hover {
             transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
         }
 
-        /* Password strength indicator */
+        /* Password strength indicator (Keep) */
         .password-strength-indicator {
             display: block;
             margin-top: 0.5rem;
@@ -490,26 +391,16 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             font-weight: 600;
             height: 1.2em;
         }
-        
-        .password-strength-indicator.weak {
-            color: #ef4444;
-        }
-        
-        .password-strength-indicator.medium {
-            color: #f59e0b;
-        }
-        
-        .password-strength-indicator.strong {
-            color: #22c55e;
-        }
+        .password-strength-indicator.weak { color: #ef4444; }
+        .password-strength-indicator.medium { color: #f59e0b; }
+        .password-strength-indicator.strong { color: #22c55e; }
 
-        /* User Card List */
+        /* User Card List (Keep) */
         .user-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 1.25rem;
         }
-        
         .user-card {
             background: var(--bg-secondary);
             border-radius: 12px;
@@ -518,12 +409,10 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             overflow: hidden;
             transition: all 0.3s ease;
         }
-        
         .user-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
-        
         .user-card-header {
             padding: 1.25rem;
             background: var(--input-bg);
@@ -531,7 +420,6 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             display: flex;
             align-items: center;
         }
-        
         .user-avatar {
             width: 50px;
             height: 50px;
@@ -545,38 +433,26 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             font-weight: 700;
             margin-right: 1rem;
         }
-        
-        .user-info {
-            flex: 1;
-        }
-        
+        .user-info { flex: 1; }
         .user-info h3 {
             font-size: 1.1rem;
             font-weight: 600;
             margin: 0 0 0.25rem;
             color: var(--text-primary);
         }
-        
         .user-info p {
             margin: 0;
             font-size: 0.9rem;
             color: var(--text-secondary);
+            word-break: break-all; /* Prevent long emails overflowing */
         }
-        
-        .user-card-body {
-            padding: 1.25rem;
-        }
-        
+        .user-card-body { padding: 1.25rem; }
         .user-detail {
             margin-bottom: 0.75rem;
             display: flex;
             align-items: flex-start;
         }
-        
-        .user-detail:last-child {
-            margin-bottom: 0;
-        }
-        
+        .user-detail:last-child { margin-bottom: 0; }
         .user-detail i {
             margin-right: 0.75rem;
             color: var(--text-secondary);
@@ -584,76 +460,62 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             text-align: center;
             margin-top: 0.2rem;
         }
-        
-        .user-detail-content {
-            flex: 1;
-        }
-        
+        .user-detail-content { flex: 1; }
         .user-detail-label {
             font-size: 0.85rem;
             color: var(--text-secondary);
             margin-bottom: 0.25rem;
         }
-        
         .user-detail-value {
             font-weight: 500;
             color: var(--text-primary);
         }
-        
         .user-card-footer {
             padding: 1rem 1.25rem;
             border-top: 1px solid var(--card-border);
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* Allow wrap */
+            gap: 0.5rem;
         }
-        
         .user-id {
             font-size: 0.85rem;
             color: var(--text-secondary);
             display: flex;
             align-items: center;
         }
-        
-        .user-id i {
-            margin-right: 0.5rem;
-        }
-        
+        .user-id i { margin-right: 0.5rem; }
         .user-actions {
             display: flex;
             gap: 0.75rem;
+            flex-wrap: wrap; /* Allow wrap */
         }
-        
         .btn-sm {
             padding: 0.5rem 0.75rem;
             font-size: 0.85rem;
             border-radius: 6px;
         }
-        
         .btn-warning {
             background: linear-gradient(135deg, #fbbf24, #f59e0b);
             color: white;
             box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
         }
-        
         .btn-danger {
             background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
             box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3);
         }
-        
-        .btn-warning:hover, .btn-danger:hover {
-            transform: translateY(-2px);
-        }
+        .btn-warning:hover, .btn-danger:hover { transform: translateY(-2px); }
 
-        /* Pagination styling */
+        /* Pagination styling (Keep) */
         .pagination-controls {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            margin: 1.5rem 0;
+            margin: 1.5rem 0 0; /* Added top margin only */
             gap: 0.5rem;
         }
-        
         .pagination-controls button, .pagination-controls span {
             min-width: 36px;
             height: 36px;
@@ -666,29 +528,24 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             font-weight: 500;
             transition: all 0.3s ease;
         }
-        
         .pagination-controls button {
             background: var(--bg-secondary);
             color: var(--text-primary);
             cursor: pointer;
         }
-        
         .pagination-controls button:hover:not(:disabled) {
             background: var(--input-bg);
             transform: translateY(-2px);
         }
-        
         .pagination-controls button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
-        
         .pagination-controls span.current-page {
             background: var(--gradient-primary);
             color: white;
             border-color: transparent;
         }
-        
         .page-info {
             width: 100%;
             text-align: center;
@@ -697,14 +554,13 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             color: var(--text-secondary);
         }
 
-        /* Loading and error indicators */
+        /* Loading and error indicators (Keep) */
         .loading-indicator, .table-error {
             padding: 2rem;
             text-align: center;
             font-size: 0.95rem;
             border-radius: 12px;
         }
-        
         .loading-indicator {
             color: var(--text-secondary);
             background: var(--input-bg);
@@ -713,20 +569,18 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             align-items: center;
             gap: 1rem;
         }
-        
         .loading-indicator i {
             font-size: 2rem;
             color: #6366f1;
             animation: spin 1.5s linear infinite;
         }
-        
         .table-error {
             color: #ef4444;
             background: rgba(239, 68, 68, 0.1);
             border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
-        /* Theme toggle button */
+        /* Theme toggle button (Keep) */
         .theme-toggle {
             position: fixed;
             bottom: 20px;
@@ -746,13 +600,12 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             z-index: 100;
             transition: all 0.3s ease;
         }
-        
         .theme-toggle:hover {
             transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
         }
 
-        /* Dark mode */
+        /* Dark mode (Keep) */
         .dark-mode {
             --bg-primary: var(--bg-primary-dark);
             --bg-secondary: var(--bg-secondary-dark);
@@ -768,62 +621,34 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             --glass-bg: var(--glass-bg-dark);
             --glass-border: var(--glass-border-dark);
         }
-
-        /* Navbar for mobile */
-        .navbar {
-            display: none;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            background: var(--navbar-bg-light);
-            border-bottom: 1px solid var(--glass-border);
-            padding: 1rem 1.5rem;
-        }
-        
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-            font-weight: 700;
-            color: var(--text-primary);
-            text-decoration: none;
-        }
-        
-        .navbar-brand img {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 0.75rem;
-        }
-        
-        .navbar-toggler {
-            border: none;
-            padding: 0.5rem;
-            color: var(--text-primary);
-            background: var(--input-bg);
-            border-radius: 8px;
+        /* Styles for the fixed top-left button */
+        .dashboard-button-top-left {
+            position: fixed; /* Keep it fixed */
+            top: 15px;       /* Adjust spacing from top */
+            left: 15px;      /* Adjust spacing from left */
+            z-index: 1010;  /* Ensure it's above theme toggle and content */
         }
 
-        /* Animations */
+        /* --- REMOVED MOBILE NAVBAR STYLES --- */
+
+        /* Animations (Keep) */
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
         .fade-in {
             opacity: 0;
             animation: fadeUp 0.6s ease forwards;
         }
-        
         .delay-1 { animation-delay: 0.1s; }
         .delay-2 { animation-delay: 0.2s; }
         .delay-3 { animation-delay: 0.3s; }
 
-        /* Empty state */
+        /* Empty state (Keep) */
         .empty-state {
             text-align: center;
             padding: 3rem 1rem;
@@ -831,110 +656,63 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             border-radius: 16px;
             border: 1px solid var(--card-border);
         }
-        
         .empty-state i {
             font-size: 3rem;
             color: var(--text-secondary);
             margin-bottom: 1rem;
         }
-        
         .empty-state h3 {
             font-size: 1.25rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
             color: var(--text-primary);
         }
-        
         .empty-state p {
             color: var(--text-secondary);
             margin-bottom: 1.5rem;
         }
 
-        /* Media queries */
-        @media (max-width: 992px) {
-            .sidebar {
-                width: 80px;
-                padding: 1.5rem 0.5rem;
-                transform: translateX(-100%);
-                z-index: 1050;
-            }
-            
-            .sidebar.show {
-                transform: translateX(0);
-            }
-            
-            .sidebar-header h3, .sidebar-header p, .nav-link span {
-                display: none;
-            }
-            
-            .sidebar-header {
-                justify-content: center;
-                margin-bottom: 2rem;
-            }
-            
-            .sidebar-header img {
-                margin-right: 0;
-            }
-            
-            .nav-link {
-                justify-content: center;
-                padding: 1rem;
-            }
-            
-            .nav-link i {
-                margin-right: 0;
-                font-size: 1.5rem;
-            }
-            
-            .logout-btn {
-                justify-content: center;
-                padding: 1rem;
-            }
-            
-            .logout-btn i {
-                margin-right: 0;
-            }
-            
-            .logout-btn span {
-                display: none;
-            }
-            
+        /* Media queries - Adjust for centered layout */
+        @media (max-width: 1200px) {
             .main-container {
-                margin-left: 0;
-                width: 100%;
-            }
-            
-            .navbar {
-                display: flex;
-            }
-            
-            .user-list {
-                grid-template-columns: 1fr;
+                 max-width: 95%; /* Use more width on slightly smaller screens */
             }
         }
-        
+
+        @media (max-width: 768px) {
+             .user-list {
+                 grid-template-columns: 1fr; /* Stack user cards */
+             }
+             .page-header {
+                 flex-direction: column;
+                 align-items: flex-start;
+             }
+             /* Adjust body padding for smaller screens if the button overlaps too much */
+             body {
+                 padding-top: 70px;
+             }
+        }
+
         @media (max-width: 576px) {
             .main-container {
+                padding: 1rem; /* Less padding on small screens */
+            }
+            .card-body, .user-card-body {
                 padding: 1rem;
             }
-            
-            .card-body {
-                padding: 1rem;
-            }
-            
-            .user-card-body {
-                padding: 1rem;
-            }
-            
-            .page-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.5rem;
-            }
+             /* Further adjust body padding */
+             body {
+                 padding-top: 65px;
+             }
+             /* Optionally make the top-left button smaller */
+             .dashboard-button-top-left .btn {
+                 padding: 0.5rem 1rem;
+                 font-size: 0.85rem;
+             }
         }
     </style>
     <script>
-        // Keep toggleUserFields separate
+        // Keep toggleUserFields separate - No changes needed here
         function toggleUserFields() {
             const typeElement = document.getElementById('add_user_type'); if (!typeElement) return;
             const type = typeElement.value;
@@ -953,104 +731,47 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
              if (locationInput) locationInput.required = (type === 'pilote'); // Example
              if (phoneInput) phoneInput.required = (type === 'pilote'); // Example
         }
-        // Note: Moved DOMContentLoaded listener to bottom script block
     </script>
 </head>
 <body>
-    <!-- Background elements -->
+    <!-- MOVED & MODIFIED: Back to Dashboard Button Container -->
+    <div class="dashboard-button-top-left fade-in">
+        <a href="<?= htmlspecialchars($dashboardUrl) ?>" class="btn btn-primary btn-lg">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Background elements (Keep) -->
     <div class="bg-gradient-spot bg-gradient-spot-1"></div>
     <div class="bg-gradient-spot bg-gradient-spot-2"></div>
     <div class="bg-grid"></div>
-    
-    <!-- Theme toggle button -->
+
+    <!-- Theme toggle button (Keep) -->
     <button id="themeToggle" class="theme-toggle">
         <i class="fas fa-moon"></i>
     </button>
 
     <div class="main-wrapper">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <img src="../View/images/default_avatar.png" alt="Profile Picture">
-                <div>
-                    <h3>Admin Panel</h3>
-                    <p>User Management</p>
-                </div>
-            </div>
-            
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="<?= $dashboardUrl ?>" class="nav-link">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="userController.php" class="nav-link active">
-                        <i class="fas fa-users-gear"></i>
-                        <span>Manage Users</span>
-                    </a>
-                </li>
-                <?php if ($loggedInUserRole === 'admin'): ?>
-                <li class="nav-item">
-                    <a href="../Controller/companyController.php" class="nav-link">
-                        <i class="fas fa-building"></i>
-                        <span>Manage Companies</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="../Controller/internshipController.php" class="nav-link">
-                        <i class="fas fa-file-alt"></i>
-                        <span>Manage Offers</span>
-                    </a>
-                </li>
-                <?php endif; ?>
-                <li class="nav-item">
-                    <a href="../Controller/editUser.php?id=<?= $loggedInUserId ?>&type=<?= $loggedInUserRole ?>" class="nav-link">
-                        <i class="fas fa-user-pen"></i>
-                        <span>My Profile</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="../Controller/settingsController.php" class="nav-link">
-                        <i class="fas fa-cog"></i>
-                        <span>Settings</span>
-                    </a>
-                </li>
-            </ul>
-            
-            <div class="sidebar-footer">
-                <a href="../Controller/logoutController.php" class="logout-btn">
-                    <i class="fas fa-right-from-bracket"></i>
-                    <span>Logout</span>
-                </a>
-            </div>
-        </aside>
+        <!-- --- SIDEBAR REMOVED --- -->
 
         <!-- Main content -->
         <div class="main-container">
-            <!-- Top navbar for mobile -->
-            <nav class="navbar navbar-expand-lg sticky-top d-lg-none">
-                <a class="navbar-brand" href="#">
-                    <img src="../View/images/default_avatar.png" alt="Profile">
-                    <span><i class="fas fa-users-gear me-2"></i>User Management</span>
-                </a>
-                <button class="navbar-toggler" type="button" id="sidebarToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </nav>
-            
+            <!-- --- MOBILE NAVBAR REMOVED --- -->
+
+            <!-- Original Back to Dashboard Button location REMOVED -->
+
             <!-- Page header -->
             <div class="page-header fade-in">
                 <div>
                     <h1><i class="fa-solid fa-users-gear me-2"></i><?= htmlspecialchars($pageTitle) ?></h1>
                     <ul class="breadcrumb">
-                        <li><a href="<?= $dashboardUrl ?>">Dashboard</a></li>
+                        <li><a href="<?= htmlspecialchars($dashboardUrl) ?>">Dashboard</a></li>
                         <li>User Management</li>
                     </ul>
                 </div>
+                 <!-- REMOVED: Logout Button -->
             </div>
-            
+
             <?php if (!empty($errorMessage)): ?><div class="message error-message fade-in"><i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($errorMessage) ?></div><?php endif; ?>
             <?php if (!empty($successMessage)): ?><div class="message success-message fade-in"><i class="fa-solid fa-check-circle"></i> <?= htmlspecialchars($successMessage) ?></div><?php endif; ?>
 
@@ -1074,21 +795,21 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="add_name">Name:</label>
                                     <input type="text" class="form-control" id="add_name" name="name" required>
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="add_email">Email:</label>
                                     <input type="email" class="form-control" id="add_email" name="email" required>
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="add_password">Password:</label>
@@ -1106,7 +827,7 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
                                     <input type="text" class="form-control" id="add_location" name="location">
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="add_phone">Phone:</label>
@@ -1122,7 +843,7 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
                                     <input type="date" class="form-control" id="add_dob" name="dob">
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="add_year">Year:</label>
@@ -1136,14 +857,14 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="add_school">School:</label>
                                     <input type="text" class="form-control" id="add_school" name="school">
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="add_description">Description:</label>
@@ -1151,7 +872,7 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
                                 </div>
                             </div>
                         </div>
-                        
+
                         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add User</button>
                     </form>
                 </div>
@@ -1177,7 +898,7 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
                 </div>
             </div>
 
-            <!-- Pilote List Section (Admin Only) -->
+            <!-- Pilote List Section (Admin Only / Pilote Management) -->
             <?php if ($canManagePilotes): ?>
             <div class="card fade-in delay-2">
                 <div class="card-header">
@@ -1199,7 +920,7 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             </div>
             <?php endif; ?>
 
-            <!-- Admin List Section (Admin Only) -->
+            <!-- Admin List Section (Admin Only / Admin Management) -->
             <?php if ($canManageAdmins): ?>
             <div class="card fade-in delay-3">
                 <div class="card-header">
@@ -1220,15 +941,15 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
                 </div>
             </div>
             <?php endif; ?>
-        </div>
-    </div>
+        </div> <!-- End main-container -->
+    </div> <!-- End main-wrapper -->
 
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- ****** AJAX, Pagination, and Password Strength Script ****** -->
     <script>
-        // --- Password Strength Functions ---
+        // --- Password Strength Functions (Keep as is) ---
         function checkPasswordStrength(password) {
             let strength = 0; let requirements = []; const minLength = 8;
             const hasUpperCase = /[A-Z]/.test(password); const hasNumber = /[0-9]/.test(password);
@@ -1254,27 +975,22 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
         }
         // --- End Password Strength ---
 
-        // --- AJAX Pagination Variables and Functions ---
+        // --- AJAX Pagination Variables and Functions (Keep as is) ---
         const loggedInUserRoleJS = '<?= $loggedInUserRole ?>';
         const loggedInUserIdJS = <?= $loggedInUserId ?>;
         const itemsPerPageJS = <?= $itemsPerPage ?>;
 
-        // Function to fetch user data
+        // Function to fetch user data (Keep as is)
         async function fetchUsersPage(userType, page = 1) {
             const listContainer = document.getElementById(`${userType}-list`);
             const paginationDiv = document.getElementById(`${userType}-pagination`);
             const loadingDiv = document.getElementById(`${userType}-loading`);
             const errorDiv = document.getElementById(`${userType}-error`);
 
-            if (!listContainer || !paginationDiv || !loadingDiv || !errorDiv) { 
-                console.error(`Missing HTML elements for ${userType}`); 
-                return; 
-            }
+            if (!listContainer || !paginationDiv || !loadingDiv || !errorDiv) { console.error(`Missing HTML elements for ${userType}`); return; }
 
-            loadingDiv.style.display = 'block'; 
-            errorDiv.style.display = 'none';
-            listContainer.innerHTML = ''; 
-            paginationDiv.innerHTML = ''; // Clear previous
+            loadingDiv.style.display = 'block'; errorDiv.style.display = 'none';
+            listContainer.innerHTML = ''; paginationDiv.innerHTML = ''; // Clear previous
 
             try {
                 const response = await fetch(`../Controller/ajax_get_users.php?type=${userType}&page=${page}`);
@@ -1283,7 +999,6 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
                 if (data.error) { throw new Error(data.error); }
 
                 if (data.success) {
-                    // Process data *after* fetch for AJAX response as well
                     const safeUsers = processUserDataForJS(data.users, userType);
                     renderUserCards(listContainer, userType, safeUsers);
                     renderPagination(paginationDiv, userType, data.pagination);
@@ -1292,159 +1007,74 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
                 console.error(`Error fetching ${userType} page ${page}:`, error);
                 errorDiv.textContent = `Error loading ${userType}: ${error.message}. Please try again.`;
                 errorDiv.style.display = 'block';
-                listContainer.innerHTML = `<div class="empty-state">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <h3>Could not load user data</h3>
-                    <p>Please try again or contact support.</p>
-                </div>`;
+                listContainer.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-circle"></i><h3>Could not load user data</h3><p>Please try again or contact support.</p></div>`;
             } finally {
                 loadingDiv.style.display = 'none';
             }
         }
 
-        // Function to render user cards
+        // Function to render user cards (Keep as is)
         function renderUserCards(container, userType, users) {
-            container.innerHTML = ''; // Clear previous content
+             container.innerHTML = ''; // Clear previous content
 
-            if (!users || users.length === 0) {
-                container.innerHTML = `<div class="empty-state">
-                    <i class="fas fa-users-slash"></i>
-                    <h3>No ${userType} found</h3>
-                    <p>Add your first ${userType.substring(0, userType.length-1)} using the form above.</p>
-                </div>`;
-                return;
-            }
+             if (!users || users.length === 0) {
+                 container.innerHTML = `<div class="empty-state"><i class="fas fa-users-slash"></i><h3>No ${userType} found</h3><p>Add your first ${userType.substring(0, userType.length-1)} using the form above.</p></div>`;
+                 return;
+             }
 
-            users.forEach(user => {
-                // Basic check for essential data
-                if (!user || typeof user.user_id === 'undefined' || typeof user.name === 'undefined' || typeof user.email === 'undefined') {
-                    console.warn("Skipping user card due to missing essential data:", user);
-                    return; // Skip this iteration
-                }
+             users.forEach(user => {
+                 if (!user || typeof user.user_id === 'undefined' || typeof user.name === 'undefined' || typeof user.email === 'undefined') { console.warn("Skipping user card due to missing essential data:", user); return; }
 
-                let actionsHtml = '';
-                let detailsHtml = '';
-                const initials = getInitials(user.name);
-                const userId = userType === 'students' ? user.id_student : (userType === 'pilotes' ? user.id_pilote : user.id_admin);
+                 let actionsHtml = ''; let detailsHtml = '';
+                 const initials = getInitials(user.name);
+                 const userId = userType === 'students' ? user.id_student : (userType === 'pilotes' ? user.id_pilote : user.id_admin);
 
-                // Determine actions based on server-provided 'canModify' flag
-                if (user.canModify) {
-                    actionsHtml = `
-                        <a href="editUser.php?id=${user.user_id}&type=${user.user_type}" class="btn btn-warning btn-sm">
-                            <i class="fa-solid fa-pen-to-square"></i> Edit
-                        </a>`;
-                    if (!(userType === 'admins' && loggedInUserRoleJS === 'admin' && user.user_id === loggedInUserIdJS)) {
-                        actionsHtml += `
-                            <form method="post" action="userController.php" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete ${user.user_type} ${escapeHtml(user.name)}? This cannot be undone.');">
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="type" value="${user.user_type}">
-                                <input type="hidden" name="id" value="${user.user_id}">
-                                <button type="submit" class="btn btn-danger btn-sm">
-                                    <i class="fa-solid fa-trash"></i> Delete
-                                </button>
-                            </form>`;
-                    } else if (userType === 'admins') {
-                        actionsHtml += `<span class="user-id"><i class="fas fa-info-circle"></i>Current user</span>`;
-                    }
-                } else {
-                    // Handle admin viewing self (can edit, not delete via list)
-                    if (userType === 'admins' && loggedInUserRoleJS === 'admin' && user.user_id === loggedInUserIdJS) {
-                        actionsHtml = `
-                            <a href="editUser.php?id=${user.user_id}&type=${user.user_type}" class="btn btn-warning btn-sm">
-                                <i class="fa-solid fa-pen-to-square"></i> Edit
-                            </a>
-                            <span class="user-id"><i class="fas fa-info-circle"></i>Current user</span>`;
-                    } else {
-                        actionsHtml = '<span class="user-id"><i class="fas fa-eye"></i>View only</span>';
-                    }
-                }
+                 if (user.canModify) {
+                     actionsHtml = `<a href="editUser.php?id=${user.user_id}&type=${user.user_type}" class="btn btn-warning btn-sm"><i class="fa-solid fa-pen-to-square"></i> Edit</a>`;
+                     if (!(userType === 'admins' && loggedInUserRoleJS === 'admin' && user.user_id === loggedInUserIdJS)) {
+                         actionsHtml += `
+                             <form method="post" action="userController.php" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete ${user.user_type} ${escapeHtml(user.name)}? This cannot be undone.');">
+                                 <input type="hidden" name="action" value="delete"><input type="hidden" name="type" value="${user.user_type}"><input type="hidden" name="id" value="${user.user_id}">
+                                 <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i> Delete</button>
+                             </form>`;
+                     } else if (userType === 'admins') {
+                         actionsHtml += `<span class="user-id"><i class="fas fa-info-circle"></i>Current user</span>`;
+                     }
+                 } else {
+                     if (userType === 'admins' && loggedInUserRoleJS === 'admin' && user.user_id === loggedInUserIdJS) {
+                         actionsHtml = `<a href="editUser.php?id=${user.user_id}&type=${user.user_type}" class="btn btn-warning btn-sm"><i class="fa-solid fa-pen-to-square"></i> Edit</a><span class="user-id"><i class="fas fa-info-circle"></i>Current user</span>`;
+                     } else {
+                         actionsHtml = '<span class="user-id"><i class="fas fa-eye"></i>View only</span>';
+                     }
+                 }
 
-                // Build detail fields based on user type
-                if (userType === 'students') {
-                    detailsHtml = `
-                        <div class="user-detail">
-                            <i class="fas fa-graduation-cap"></i>
-                            <div class="user-detail-content">
-                                <div class="user-detail-label">Year</div>
-                                <div class="user-detail-value">${escapeHtml(user.year || 'N/A')}</div>
-                            </div>
-                        </div>
-                        <div class="user-detail">
-                            <i class="fas fa-school"></i>
-                            <div class="user-detail-content">
-                                <div class="user-detail-label">School</div>
-                                <div class="user-detail-value">${escapeHtml(user.school || 'N/A')}</div>
-                            </div>
-                        </div>
-                        <div class="user-detail">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <div class="user-detail-content">
-                                <div class="user-detail-label">Location</div>
-                                <div class="user-detail-value">${escapeHtml(user.location || 'N/A')}</div>
-                            </div>
-                        </div>
-                        ${loggedInUserRoleJS === 'admin' ? `
-                        <div class="user-detail">
-                            <i class="fas fa-user-plus"></i>
-                            <div class="user-detail-content">
-                                <div class="user-detail-label">Created By</div>
-                                <div class="user-detail-value">${escapeHtml(user.created_by_pilote_id || 'Admin/Old')}</div>
-                            </div>
-                        </div>` : ''}
-                    `;
-                } else if (userType === 'pilotes') {
-                    detailsHtml = `
-                        <div class="user-detail">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <div class="user-detail-content">
-                                <div class="user-detail-label">Location</div>
-                                <div class="user-detail-value">${escapeHtml(user.location || 'N/A')}</div>
-                            </div>
-                        </div>
-                        <div class="user-detail">
-                            <i class="fas fa-phone"></i>
-                            <div class="user-detail-content">
-                                <div class="user-detail-label">Phone</div>
-                                <div class="user-detail-value">${escapeHtml(user.phone || 'N/A')}</div>
-                            </div>
-                        </div>
-                    `;
-                } else if (userType === 'admins') {
-                    detailsHtml = `
-                        <div class="user-detail">
-                            <i class="fas fa-shield-alt"></i>
-                            <div class="user-detail-content">
-                                <div class="user-detail-label">Role</div>
-                                <div class="user-detail-value">Administrator</div>
-                            </div>
-                        </div>
-                    `;
-                }
+                 if (userType === 'students') {
+                     detailsHtml = `
+                         <div class="user-detail"><i class="fas fa-graduation-cap"></i><div class="user-detail-content"><div class="user-detail-label">Year</div><div class="user-detail-value">${escapeHtml(user.year || 'N/A')}</div></div></div>
+                         <div class="user-detail"><i class="fas fa-school"></i><div class="user-detail-content"><div class="user-detail-label">School</div><div class="user-detail-value">${escapeHtml(user.school || 'N/A')}</div></div></div>
+                         <div class="user-detail"><i class="fas fa-map-marker-alt"></i><div class="user-detail-content"><div class="user-detail-label">Location</div><div class="user-detail-value">${escapeHtml(user.location || 'N/A')}</div></div></div>
+                         ${loggedInUserRoleJS === 'admin' ? `<div class="user-detail"><i class="fas fa-user-plus"></i><div class="user-detail-content"><div class="user-detail-label">Created By Pilote ID</div><div class="user-detail-value">${escapeHtml(user.created_by_pilote_id || 'Admin/Old')}</div></div></div>` : ''}
+                     `;
+                 } else if (userType === 'pilotes') {
+                     detailsHtml = `
+                         <div class="user-detail"><i class="fas fa-map-marker-alt"></i><div class="user-detail-content"><div class="user-detail-label">Location</div><div class="user-detail-value">${escapeHtml(user.location || 'N/A')}</div></div></div>
+                         <div class="user-detail"><i class="fas fa-phone"></i><div class="user-detail-content"><div class="user-detail-label">Phone</div><div class="user-detail-value">${escapeHtml(user.phone || 'N/A')}</div></div></div>
+                     `;
+                 } else if (userType === 'admins') {
+                     detailsHtml = `<div class="user-detail"><i class="fas fa-shield-alt"></i><div class="user-detail-content"><div class="user-detail-label">Role</div><div class="user-detail-value">Administrator</div></div></div>`;
+                 }
 
-                // Create user card
-                const userCard = document.createElement('div');
-                userCard.className = 'user-card';
-                userCard.innerHTML = `
-                    <div class="user-card-header">
-                        <div class="user-avatar">${initials}</div>
-                        <div class="user-info">
-                            <h3>${escapeHtml(user.name)}</h3>
-                            <p>${escapeHtml(user.email)}</p>
-                        </div>
-                    </div>
-                    <div class="user-card-body">
-                        ${detailsHtml}
-                    </div>
-                    <div class="user-card-footer">
-                        <div class="user-id"><i class="fas fa-id-card"></i> ID: ${escapeHtml(userId)}</div>
-                        <div class="user-actions">${actionsHtml}</div>
-                    </div>
-                `;
-                container.appendChild(userCard);
-            });
-        }
+                 const userCard = document.createElement('div'); userCard.className = 'user-card';
+                 userCard.innerHTML = `
+                     <div class="user-card-header"><div class="user-avatar">${initials}</div><div class="user-info"><h3>${escapeHtml(user.name)}</h3><p>${escapeHtml(user.email)}</p></div></div>
+                     <div class="user-card-body">${detailsHtml}</div>
+                     <div class="user-card-footer"><div class="user-id"><i class="fas fa-id-card"></i> ID: ${escapeHtml(userId)}</div><div class="user-actions">${actionsHtml}</div></div>`;
+                 container.appendChild(userCard);
+             });
+         }
 
-        // Function to get initials from name
+
+        // Function to get initials from name (Keep as is)
         function getInitials(name) {
             if (!name || typeof name !== 'string') return '?';
             const nameParts = name.trim().split(' ');
@@ -1452,130 +1082,70 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
             return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
         }
 
-        // Function to render pagination controls
+        // Function to render pagination controls (Keep as is)
         function renderPagination(paginationDiv, userType, pagination) {
-            paginationDiv.innerHTML = ''; // Clear previous controls
-            const { currentPage, totalPages, totalUsers } = pagination;
-
+            paginationDiv.innerHTML = ''; const { currentPage, totalPages, totalUsers } = pagination;
             if (totalPages <= 0) { paginationDiv.innerHTML = `<span class="page-info">No users found.</span>`; return; }
             if (totalPages === 1) { paginationDiv.innerHTML = `<span class="page-info">Page 1 of 1 (${totalUsers} total)</span>`; return; }
 
             let paginationHtml = '';
             paginationHtml += `<button type="button" onclick="fetchUsersPage('${userType}', ${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>« Prev</button>`;
-
-            const maxPagesToShow = 5;
-            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            const maxPagesToShow = 5; let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
             let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
             if(endPage === totalPages) { startPage = Math.max(1, endPage - maxPagesToShow + 1); }
-
-            if (startPage > 1) {
-                 paginationHtml += `<button type="button" onclick="fetchUsersPage('${userType}', 1)">1</button>`;
-                 if (startPage > 2) { paginationHtml += `<span>...</span>`; }
-            }
-            for (let i = startPage; i <= endPage; i++) {
-                 if (i === currentPage) { paginationHtml += `<span class="current-page">${i}</span>`; }
-                 else { paginationHtml += `<button type="button" onclick="fetchUsersPage('${userType}', ${i})">${i}</button>`; }
-            }
-            if (endPage < totalPages) {
-                  if (endPage < totalPages - 1) { paginationHtml += `<span>...</span>`; }
-                 paginationHtml += `<button type="button" onclick="fetchUsersPage('${userType}', ${totalPages})">${totalPages}</button>`;
-            }
-
+            if (startPage > 1) { paginationHtml += `<button type="button" onclick="fetchUsersPage('${userType}', 1)">1</button>`; if (startPage > 2) { paginationHtml += `<span>...</span>`; } }
+            for (let i = startPage; i <= endPage; i++) { if (i === currentPage) { paginationHtml += `<span class="current-page">${i}</span>`; } else { paginationHtml += `<button type="button" onclick="fetchUsersPage('${userType}', ${i})">${i}</button>`; } }
+            if (endPage < totalPages) { if (endPage < totalPages - 1) { paginationHtml += `<span>...</span>`; } paginationHtml += `<button type="button" onclick="fetchUsersPage('${userType}', ${totalPages})">${totalPages}</button>`; }
             paginationHtml += `<button type="button" onclick="fetchUsersPage('${userType}', ${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>Next »</button>`;
             paginationHtml += `<span class="page-info">Page ${currentPage} of ${totalPages} (${totalUsers} total users)</span>`;
             paginationDiv.innerHTML = paginationHtml;
         }
 
-        // Helper to escape HTML special characters
+        // Helper to escape HTML special characters (Keep as is)
         function escapeHtml(unsafe) {
              if (unsafe === null || typeof unsafe === 'undefined') return '';
              const div = document.createElement('div');
-             div.textContent = unsafe; // Let the browser handle escaping
-             return div.innerHTML;
+             div.textContent = unsafe; return div.innerHTML;
         }
 
-        // *** JS Helper function to process data (mirroring PHP helper) ***
+        // *** JS Helper function to process data (Keep as is) ***
         function processUserDataForJS(data_array, userType) {
              if (!Array.isArray(data_array)) return [];
-
-             // Define fields potentially containing newlines per user type
-             const fieldsToEscapeMap = {
-                 students: ['description', 'location', 'school', 'name', 'email'],
-                 pilotes: ['location', 'name', 'email'],
-                 admins: ['name', 'email']
-             };
+             const fieldsToEscapeMap = { students: ['description', 'location', 'school', 'name', 'email'], pilotes: ['location', 'name', 'email'], admins: ['name', 'email'] };
              const fields_to_escape = fieldsToEscapeMap[userType] || [];
-
              return data_array.map(item => {
-                 if (typeof item !== 'object' || item === null) return item; // Skip non-objects
-                 const processed_item = { ...item }; // Shallow copy
-                 fields_to_escape.forEach(field => {
-                    if (processed_item.hasOwnProperty(field) && typeof processed_item[field] === 'string') {
-                         // Replace newlines with escaped newlines for JS strings
-                         processed_item[field] = processed_item[field].replace(/\\r\\n|\\r|\\n/g, '\n').replace(/\r\n|\r|\n/g, '\\n');
-                     }
-                 });
+                 if (typeof item !== 'object' || item === null) return item;
+                 const processed_item = { ...item };
+                 fields_to_escape.forEach(field => { if (processed_item.hasOwnProperty(field) && typeof processed_item[field] === 'string') { processed_item[field] = processed_item[field].replace(/\\r\\n|\\r|\\n/g, '\n').replace(/\r\n|\r|\n/g, '\\n'); } });
                  return processed_item;
              });
          }
 
-
         // --- Initial Setup on DOM Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Theme toggle functionality
+            // Theme toggle functionality (Keep as is)
             const themeToggle = document.getElementById('themeToggle');
             const body = document.body;
             const icon = themeToggle.querySelector('i');
-            
-            // Check for saved theme preference or use system preference
             const savedTheme = localStorage.getItem('theme');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
-            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-                body.classList.add('dark-mode');
-                icon.classList.replace('fa-moon', 'fa-sun');
-            }
-            
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) { body.classList.add('dark-mode'); icon.classList.replace('fa-moon', 'fa-sun'); }
             themeToggle.addEventListener('click', function() {
                 body.classList.toggle('dark-mode');
-                
-                if (body.classList.contains('dark-mode')) {
-                    icon.classList.replace('fa-moon', 'fa-sun');
-                    localStorage.setItem('theme', 'dark');
-                } else {
-                    icon.classList.replace('fa-sun', 'fa-moon');
-                    localStorage.setItem('theme', 'light');
-                }
+                if (body.classList.contains('dark-mode')) { icon.classList.replace('fa-moon', 'fa-sun'); localStorage.setItem('theme', 'dark'); }
+                else { icon.classList.replace('fa-sun', 'fa-moon'); localStorage.setItem('theme', 'light'); }
             });
-            
-            // Sidebar toggle for mobile
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.querySelector('.sidebar');
-            
-            if (sidebarToggle && sidebar) {
-                sidebarToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('show');
-                });
-                
-                // Close sidebar when clicking outside
-                document.addEventListener('click', function(event) {
-                    if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target) && sidebar.classList.contains('show')) {
-                        sidebar.classList.remove('show');
-                    }
-                });
-            }
 
-            // Toggle fields for Add User form
+            // --- REMOVED SIDEBAR TOGGLE JS ---
+
+            // Toggle fields for Add User form (Keep as is)
             toggleUserFields();
 
-            // Attach listeners for Add User password strength
+            // Attach listeners for Add User password strength (Keep as is)
             const addPasswordField = document.getElementById('add_password');
             const addUserForm = document.getElementById('addUserForm');
             if (addPasswordField && addUserForm) {
-                 addPasswordField.addEventListener('input', function() {
-                     const strengthData = checkPasswordStrength(this.value);
-                     updateStrengthIndicator('add_password', strengthData);
-                 });
+                 addPasswordField.addEventListener('input', function() { const strengthData = checkPasswordStrength(this.value); updateStrengthIndicator('add_password', strengthData); });
                  addUserForm.addEventListener('submit', function(event) {
                      const strengthData = checkPasswordStrength(addPasswordField.value);
                      if (strengthData.level === 'weak') {
@@ -1587,19 +1157,16 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
                  });
              }
 
-            // --- Initial data rendering using PHP variables (processed for JS safety) ---
+            // --- Initial data rendering using PHP variables (Keep as is) ---
             try {
-                 // Use the PHP-processed variables directly
                  const initialStudents = <?= json_encode($students_js_safe ?: [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
                  const initialStudentPagination = <?= json_encode($studentPagination ?: ['currentPage' => 1, 'totalPages' => 0, 'totalUsers' => 0, 'itemsPerPage' => $itemsPerPage]) ?>;
-                 console.log("Initial Students (JS Safe):", initialStudents);
                  renderUserCards(document.getElementById('students-list'), 'students', initialStudents);
                  renderPagination(document.getElementById('students-pagination'), 'students', initialStudentPagination);
 
                 <?php if ($canManagePilotes): ?>
                     const initialPilotes = <?= json_encode($pilotes_js_safe ?: [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
                     const initialPilotePagination = <?= json_encode($pilotePagination ?: ['currentPage' => 1, 'totalPages' => 0, 'totalUsers' => 0, 'itemsPerPage' => $itemsPerPage]) ?>;
-                    console.log("Initial Pilotes (JS Safe):", initialPilotes);
                     renderUserCards(document.getElementById('pilotes-list'), 'pilotes', initialPilotes);
                     renderPagination(document.getElementById('pilotes-pagination'), 'pilotes', initialPilotePagination);
                 <?php endif; ?>
@@ -1607,23 +1174,10 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
                 <?php if ($canManageAdmins): ?>
                      const initialAdmins = <?= json_encode($admins_js_safe ?: [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
                      const initialAdminPagination = <?= json_encode($adminPagination ?: ['currentPage' => 1, 'totalPages' => 0, 'totalUsers' => 0, 'itemsPerPage' => $itemsPerPage]) ?>;
-                     console.log("Initial Admins (JS Safe):", initialAdmins);
                      renderUserCards(document.getElementById('admins-list'), 'admins', initialAdmins);
                      renderPagination(document.getElementById('admins-pagination'), 'admins', initialAdminPagination);
                 <?php endif; ?>
-                
-                // Set current date in footer
-                const currentDateElement = document.getElementById('currentDate');
-                if (currentDateElement) {
-                    const now = new Date();
-                    currentDateElement.textContent = now.toLocaleDateString('fr-FR', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                }
+
             } catch (e) {
                  console.error("Error during initial data rendering:", e);
                  const errorContainer = document.querySelector('.main-container');
@@ -1631,7 +1185,16 @@ $dashboardUrl = ($loggedInUserRole === 'admin') ? '../View/admin.php' : '../View
                     const initialErrorDiv = document.createElement('div');
                     initialErrorDiv.className = 'message error-message';
                     initialErrorDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation me-2"></i> Error rendering initial user data. Please check console for details.';
-                    errorContainer.insertBefore(initialErrorDiv, errorContainer.children[1]);
+                    // Insert after the page header
+                    const pageHeader = document.querySelector('.page-header');
+                    if (pageHeader && pageHeader.nextSibling) {
+                       errorContainer.insertBefore(initialErrorDiv, pageHeader.nextSibling);
+                    } else if (pageHeader) {
+                       errorContainer.appendChild(initialErrorDiv); // Append if header is last
+                    } else {
+                       errorContainer.insertBefore(initialErrorDiv, errorContainer.firstChild); // Prepend if header doesn't exist
+                    }
+
                  }
             }
         }); // End DOMContentLoaded
