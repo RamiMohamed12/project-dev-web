@@ -1,0 +1,1247 @@
+/* Location: /home/demy/project-dev-web/src/View/style.css */
+
+/* =========================================
+   Global / Basic Styles
+   ========================================= */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #F8F9FD;
+    line-height: 1.6;
+    color: #343a40;
+}
+
+/* Add padding to main content area */
+main {
+    padding: 120px 30px 30px 30px; /* Increased top padding further to 120px */
+    margin-left: 250px; /* Account for sidebar */
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* =========================================
+   Layout Container (Used in Edit/Manage views)
+   ========================================= */
+.container {
+    max-width: 800px; /* Max width for edit forms */
+    margin: 30px auto; /* Centering with space */
+    background-color: #ffffff;
+    padding: 30px 40px; /* Generous padding */
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e3e6f0;
+}
+
+/* =========================================
+   Headings & Links
+   ========================================= */
+h1, h2 {
+    color: #4a4a4a;
+    border-bottom: 1px solid #e3e6f0;
+    padding-bottom: 12px;
+    margin-top: 0;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+h2 {
+    font-size: 1.75em;
+}
+
+a {
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.back-link {
+    display: inline-block;
+    margin: 0 0 20px 0;
+    font-size: 1.1em;
+    color: #4e73df; /* Primary color often used in admin templates */
+}
+.back-link:hover {
+    color: #2e59d9;
+}
+.back-link i {
+    margin-right: 6px;
+    vertical-align: middle; /* Align icon better */
+}
+
+/* =========================================
+   Messages (Error/Success)
+   ========================================= */
+.message {
+    padding: 12px 18px;
+    margin-bottom: 25px;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    font-size: 0.95em;
+    display: flex;
+    align-items: center;
+}
+.message i { /* Add icon support */
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+.success-message {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+/* =========================================
+   Forms (Specific for Edit View)
+   ========================================= */
+.form-container, 
+.search-container,
+.offers-container,
+.applications-container {
+    background-color: transparent;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Form container styling */
+.form-container {
+    background: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    border: none;
+}
+
+/* Form title styling */
+.form-container h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-container h2 i {
+    color: #666;
+}
+
+/* Form field styling to match manage companies page */
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="date"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 15px 20px;
+    border: 2px solid #E5E7EB;
+    border-radius: 25px;
+    background-color: #fff5e6;
+    font-size: 15px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #374151;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Focus state */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3B82F6;
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
+}
+
+/* Label styling */
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #374151;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Icon in labels */
+.form-group label i {
+    color: #6B7280;
+    font-size: 16px;
+}
+
+/* Select specific styling */
+.form-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 15px;
+    padding-right: 45px;
+}
+
+/* Textarea specific styling */
+.form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Form group spacing */
+.form-group {
+    margin-bottom: 25px;
+}
+
+/* Submit button styling */
+button[type="submit"] {
+    background-color: #3B82F6;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 25px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+button[type="submit"]:hover {
+    background-color: #2563EB;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1);
+}
+
+button[type="submit"] i {
+    font-size: 16px;
+}
+
+/* =========================================
+   Profile Picture Specific Styles
+   ========================================= */
+.profile-pic-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%; /* Circular */
+    object-fit: cover; /* Crop image nicely */
+    border: 4px solid #eaecf4; /* Subtle border */
+    margin-bottom: 15px;
+    display: block;
+    background-color: #f8f9fc; /* Placeholder bg */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.form-group input[type="checkbox"]#remove_profile_pic {
+     width: auto; /* Don't make checkbox full width */
+     margin-right: 5px;
+     vertical-align: middle;
+     cursor: pointer;
+}
+.remove-pic-label {
+     display: inline;
+     font-weight: normal;
+     font-size: 0.9em;
+     color: #e74a3b; /* Danger color */
+     cursor: pointer;
+     vertical-align: middle;
+     text-transform: none; /* Override potential uppercase */
+     letter-spacing: normal; /* Override potential spacing */
+}
+.remove-pic-label:hover {
+    color: #c53f32;
+}
+
+/* =========================================
+   Submit Button
+   ========================================= */
+.button-container {
+    margin-top: 30px;
+    display: flex;
+    justify-content: flex-start;  /* Aligns button to the left */
+}
+
+/* Modern button styling */
+.submit-button,
+button[type="submit"] {
+    background: linear-gradient(135deg, #4B9FFF 0%, #2C7BE5 100%);
+    color: white;
+    padding: 16px 32px;
+    border: none;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(75, 159, 255, 0.2);
+}
+
+/* Rest of the button styles remain the same */
+.submit-button i,
+button[type="submit"] i {
+    font-size: 18px;
+    transition: transform 0.3s ease;
+}
+
+.submit-button:hover,
+button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(75, 159, 255, 0.3);
+    background: linear-gradient(135deg, #5BA8FF 0%, #3D8CF6 100%);
+}
+
+.submit-button:active,
+button[type="submit"]:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 10px rgba(75, 159, 255, 0.2);
+}
+
+/* Optional: Add loading state */
+.submit-button.loading,
+button[type="submit"].loading {
+    opacity: 0.8;
+    cursor: wait;
+}
+
+/* =========================================
+   Header Styles (If needed standalone) - Mostly matching dashboard views
+   ========================================= */
+header { /* If you add a header to the edit page */
+    background-color: #4e73df; /* Example primary color */
+    color: white;
+    padding: 10px 20px;
+    /* Add flex etc. if needed */
+}
+
+/* =========================================
+   Footer Styles (If needed standalone)
+   ========================================= */
+
+
+/* =========================================
+   Admin Dashboard Layout
+   ========================================= */
+.admin-layout {
+    background-color: #f4f6f9;
+}
+
+.admin-layout main {
+    margin-left: 250px; /* Adjust based on sidebar width */
+    padding: 30px;
+    background: none;
+    box-shadow: none;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    background-color: #4e73df;
+    color: white;
+    position: fixed;
+    left: 0;
+    top: 0;
+    padding: 20px 0;
+    transition: all 0.3s ease;
+}
+
+.sidebar-brand {
+    padding: 20px 25px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 25px; /* Increased margin after brand */
+}
+
+.sidebar-brand img {
+    width: 45px; /* Slightly larger profile picture */
+    height: 45px;
+    border-radius: 50%;
+    margin-right: 15px;
+    border: 2px solid rgba(255,255,255,0.2);
+}
+
+.sidebar-brand h2 {
+    font-size: 1.2rem;
+    color: white;
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar-menu {
+    padding: 0 15px;
+}
+
+.sidebar-menu a {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px; /* Increased padding */
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 10px; /* Increased margin between items */
+    transition: all 0.3s ease;
+}
+
+.sidebar-menu a:hover, 
+.sidebar-menu a.active {
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+    transform: translateX(5px); /* Slight shift on hover */
+}
+
+.sidebar-menu i {
+    margin-right: 12px;
+    width: 20px;
+    text-align: center;
+    font-size: 1.1rem; /* Slightly larger icons */
+}
+
+.sidebar-menu span {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Add a divider before the logout link */
+.sidebar-menu a:last-child {
+    margin-top: 20px; /* Extra space before logout */
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 20px;
+}
+
+/* Main Content Styles */
+.main-content {
+    flex: 1;
+    margin-left: 250px;
+    padding-top: 140px; /* Increased from 100px to 140px */
+    padding: 140px 30px 30px 30px;
+    background-color: var(--bg-color, #f0f2f5);
+    min-height: calc(100vh - 70px);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.header {
+    background-color: white;
+    padding: 15px 30px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.user-meta {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Dashboard Cards */
+.dashboard-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Increased minimum width */
+    gap: 30px; /* Increased gap between cards */
+    margin-top: 30px;
+    padding: 20px; /* Added padding around the grid */
+}
+
+.dashboard-card {
+    background-color: white;
+    border-radius: 15px; /* Slightly more rounded corners */
+    padding: 25px; /* More internal padding */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Space between elements inside card */
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.dashboard-card i {
+    font-size: 2.5rem; /* Larger icons */
+    color: #4e73df;
+    margin-bottom: 15px;
+}
+
+.dashboard-card h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.4rem; /* Larger title */
+    font-weight: 600;
+}
+
+.dashboard-card p {
+    color: #666;
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.card-link {
+    color: #4e73df;
+    text-decoration: none;
+    font-weight: 500;
+    margin-top: auto; /* Pushes link to bottom */
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.card-link:hover {
+    color: #2e59d9;
+    text-decoration: none;
+}
+
+/* For larger screens, limit to 2 cards per row */
+@media (min-width: 1400px) {
+    .dashboard-actions {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* For smaller screens */
+@media (max-width: 768px) {
+    .dashboard-actions {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 15px;
+    }
+}
+
+/* Modern table styling */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    margin-top: 20px;
+}
+
+/* Header styling */
+thead {
+    background: linear-gradient(135deg, #4B9FFF 0%, #2C7BE5 100%);
+    color: white;
+}
+
+th {
+    padding: 16px 20px;
+    font-weight: 600;
+    font-size: 15px;
+    text-align: left;
+    white-space: nowrap;
+    border: none;
+}
+
+/* Row styling */
+td {
+    padding: 16px 20px;
+    font-size: 14px;
+    border-bottom: 1px solid #EDF2F7;
+    color: #2D3748;
+}
+
+/* Alternate row colors */
+tr:nth-child(even) {
+    background-color: #F8FAFC;
+}
+
+/* Hover effect on rows */
+tbody tr:hover {
+    background-color: #F1F5F9;
+    transition: background-color 0.2s ease;
+}
+
+/* Last row styling */
+tr:last-child td {
+    border-bottom: none;
+}
+
+/* Action buttons container */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Common styles for both edit and delete buttons */
+.actions a, 
+.actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px; /* Fixed width for both buttons */
+    height: 40px; /* Fixed height for both buttons */
+    padding: 0; /* Remove padding to ensure exact size */
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Edit button */
+.edit-btn {
+    background-color: #EDF2F7;
+    color: #2D3748;
+}
+
+.edit-btn:hover {
+    background-color: #E2E8F0;
+}
+
+/* Delete button */
+.delete-btn {
+    background-color: #3B82F6;
+    color: white;
+}
+
+.delete-btn:hover {
+    background-color: #2563EB;
+}
+
+/* Icons in buttons */
+.actions i {
+    font-size: 14px;
+    margin-right: 6px;
+}
+
+/* Status or special columns */
+.status-active {
+    color: #059669;
+    background-color: #ECFDF5;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+/* Empty state styling */
+tbody tr.empty-state td {
+    text-align: center;
+    padding: 40px;
+    color: #6B7280;
+    font-style: italic;
+}
+
+/* URL column styling */
+td a {
+    color: #3B82F6;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+td a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive table adjustments */
+@media (max-width: 768px) {
+    table {
+        border-radius: 10px;
+    }
+    
+    th, td {
+        padding: 12px 16px;
+    }
+    
+    .actions {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .actions a, 
+    .actions button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Navbar Styles */
+.top-navbar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 250px;
+    height: 70px; /* Reduced from 80px */
+    background-color: #1E3A8A !important;  /* Medium navy blue */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+    z-index: 100;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-left h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: white;
+    border: none;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    letter-spacing: 0.5px;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 25px; /* Increased gap between elements */
+}
+
+.nav-email {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 600;
+}
+
+.nav-item {
+    position: relative;
+    color: white;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.nav-item i {
+    font-size: 1.2rem;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ff4444;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.nav-profile-pic {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+/* Ensure page title is visible */
+.page-title {
+    margin-top: 0;
+    margin-bottom: 30px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .menu-toggle {
+        display: block;
+    }
+
+    .top-navbar {
+        left: 0;
+        height: 70px; /* Slightly smaller on mobile */
+    }
+
+    .nav-left h1 {
+        font-size: 1.5rem; /* Smaller font on mobile */
+    }
+
+    .nav-email {
+        display: none;
+    }
+
+    .sidebar {
+        transform: translateX(-250px);
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+}
+
+/* Dark Mode Toggle - Made slightly bigger */
+.dark-mode-toggle {
+    position: relative;
+    width: 70px; /* Increased width */
+    height: 35px; /* Increased height */
+}
+
+.dark-mode-input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.dark-mode-label {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #090202;
+    border-radius: 35px;
+    transition: .4s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px; /* Adjusted padding */
+}
+
+.dark-mode-label::before {
+    content: "";
+    position: absolute;
+    height: 29px; /* Increased size of toggle button */
+    width: 29px; /* Increased size of toggle button */
+    left: 3px;
+    bottom: 3px;
+    background-color: rgb(251, 251, 245);
+    border-radius: 50%;
+    transition: .4s;
+    z-index: 2;
+}
+
+.dark-mode-input:checked + .dark-mode-label {
+    background-color: #23252f;
+}
+
+.dark-mode-input:checked + .dark-mode-label::before {
+    transform: translateX(35px); /* Adjusted to match new size */
+}
+
+.sun, .moon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #f5f1ee;
+    font-size: 16px; /* Increased icon size */
+    z-index: 1;
+}
+
+.moon {
+    color: #ffffff;
+}
+
+/* Update page title styles */
+.main-content h1, 
+.main-content h2, 
+.main-content h3 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Remove any remaining box shadows or backgrounds */
+.admin-layout main {
+    background: none;
+    box-shadow: none;
+}
+
+/* Page title styling */
+.page-title {
+    font-size: 32px;
+    font-weight: 600;
+    color: #2C3E50;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: none;
+    background: none;
+    box-shadow: none;
+    position: relative;
+    z-index: 1;
+}
+
+/* Remove the old icon background */
+.page-title i {
+    display: none; /* Hide the old icon */
+}
+
+/* Add subtle animation on page load */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.page-title {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Section spacing */
+section {
+    margin-top: 60px;  /* Increased space between sections */
+}
+
+/* Section title styling */
+section h2 {
+    color: #2C3E50;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+section h2 i {
+    color: #6B7280;
+}
+
+/* Form spacing */
+form {
+    margin-top: 30px;
+    margin-bottom: 50px;
+    width: 100%;
+    max-width: 800px;
+}
+
+/* Button container */
+.button-container,
+form button[type="submit"] {
+    align-self: flex-start;
+    margin-top: 30px;
+}
+
+/* Table container spacing */
+#companies {
+    padding-top: 20px;  /* Additional padding at the top of the table section */
+}
+
+/* Circle Plus Icon */
+.circle-plus-icon {
+    width: 45px;
+    height: 45px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 5px;
+}
+
+.circle-plus-icon::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 3px solid #4B9FFF;
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+
+.circle-plus-icon::after {
+    content: '+';
+    color: #4B9FFF;
+    font-size: 35px;
+    font-weight: bold;
+    line-height: 1;
+    margin-top: -2px;
+    margin-left: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Modern form styling */
+form {
+    margin-top: 30px;
+    margin-bottom: 50px;
+    width: 100%;
+    max-width: 800px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.form-group label i {
+    color: #6B7280;
+}
+
+/* Text fields and inputs styling */
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="date"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #E5E7EB;
+    border-radius: 25px;
+    background-color: #fff5e6;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3B82F6;
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
+}
+
+/* Table styling */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    margin-top: 20px;
+}
+
+thead {
+    background: linear-gradient(135deg, #4B9FFF 0%, #2C7BE5 100%);
+    color: white;
+}
+
+th {
+    padding: 16px 20px;
+    font-weight: 600;
+    font-size: 15px;
+    text-align: left;
+    white-space: nowrap;
+    border: none;
+}
+
+td {
+    padding: 16px 20px;
+    font-size: 14px;
+    border-bottom: 1px solid #EDF2F7;
+    color: #2D3748;
+}
+
+tr:nth-child(even) {
+    background-color: #F8FAFC;
+}
+
+tbody tr:hover {
+    background-color: #F1F5F9;
+}
+
+/* Section titles */
+section h2 {
+    color: #2C3E50;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 40px 0 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: none;
+}
+
+section h2 i {
+    color: #6B7280;
+}
+
+/* Page title */
+.page-title {
+    font-size: 32px;
+    font-weight: 600;
+    color: #2C3E50;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: none;
+}
+
+/* Remove all container classes */
+.container, .form-container {
+    all: unset;
+}
+
+/* Main content spacing */
+.main-content {
+    margin-left: 250px;
+    padding: 140px 30px 30px 30px;
+    background-color: var(--bg-color, #f0f2f5);
+    min-height: calc(100vh - 70px);
+}
+
+/* Pilote Layout Styles */
+.pilote-layout .sidebar {
+    background-color: #28a745; /* Green for Pilote */
+    color: white;
+}
+
+.pilote-layout .top-navbar {
+    background-color: #218838; /* Darker green for the navbar */
+    color: white;
+}
+
+.pilote-layout .sidebar-menu a {
+    color: rgba(255, 255, 255, 0.8); /* Ensure text is visible */
+}
+
+.pilote-layout .sidebar-menu a:hover, 
+.pilote-layout .sidebar-menu a.active {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: translateX(5px);
+}
+
+.pilote-layout .dashboard-card i {
+    color: #28a745; /* Green icons for dashboard cards */
+}
+
+.pilote-layout .sidebar {
+    width: 250px;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    padding: 20px 0;
+    transition: all 0.3s ease;
+}
+
+.pilote-layout .top-navbar {
+    position: fixed;
+    top: 0;
+    left: 250px; /* Align with sidebar width */
+    right: 0;
+    height: 70px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+}
+
+.pilote-layout .main-content {
+    margin-left: 250px; /* Account for sidebar width */
+    padding: 100px 30px 30px; /* Add padding to avoid overlap with navbar */
+    background-color: #f8f9fd; /* Match the background color */
+    min-height: calc(100vh - 70px); /* Adjust for navbar height */
+}
+
+.pilote-layout .dashboard-card {
+    background-color: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.pilote-layout .dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.pilote-layout .dashboard-card i {
+    font-size: 2.5rem;
+    color: #28a745; /* Green icons for Pilote */
+    margin-bottom: 15px;
+}
+
+.pilote-layout .nav-left h1,
+.pilote-layout .nav-right span {
+    color: white; /* Ensure text is visible on the green navbar */
+}
+
+.pilote-layout .sidebar-menu span {
+    font-size: 1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8); /* Ensure text is visible on the green sidebar */
+}
+
+@media (max-width: 768px) {
+    .pilote-layout .sidebar {
+        transform: translateX(-250px);
+    }
+
+    .pilote-layout .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .pilote-layout .top-navbar {
+        left: 0;
+    }
+
+    .pilote-layout .main-content {
+        margin-left: 0;
+    }
+}
