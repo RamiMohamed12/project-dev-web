@@ -49,7 +49,7 @@ $errorMessage = '';
 $successMessage = '';
 
 // --- Pagination Variables ---
-$itemsPerPage = 4;          // Set items per page (consistent with AJAX endpoint)
+$itemsPerPage = 6;          // Set items per page (consistent with AJAX endpoint)
 $initialPage = 1;
 $initialOffset = 0; // Offset for the first page
 
@@ -280,6 +280,40 @@ try {
 
 
 // --- Include the View ---
+// Add this code before including manageUsersView.php
+
+// Get user display information for the sidebar
+$userModel = new User($conn);
+$userDetails = null;
+$profilePicSrc = null;
+$defaultPic = '../View/images/default_avatar.png';
+
+if ($loggedInUserRole === 'admin') {
+    $userDetails = $userModel->readAdmin($loggedInUserId);
+} elseif ($loggedInUserRole === 'pilote') {
+    $userDetails = $userModel->readPilote($loggedInUserId);
+}
+
+if ($userDetails) {
+    $dbUserName = $userDetails['name'];
+    $dbUserEmail = $userDetails['email'];
+    
+    if (!empty($userDetails['profile_picture_mime']) && !empty($userDetails['profile_picture'])) {
+        $picData = is_resource($userDetails['profile_picture']) ? stream_get_contents($userDetails['profile_picture']) : $userDetails['profile_picture'];
+        if ($picData) {
+            $profilePicSrc = 'data:' . htmlspecialchars($userDetails['profile_picture_mime']) . ';base64,' . base64_encode($picData);
+        }
+    }
+}
+
+// Set display name and email for the sidebar
+$displayName = htmlspecialchars($dbUserName ?? AuthSession::getUserData('user_name') ?? ($loggedInUserRole === 'admin' ? 'Admin' : 'Pilote'));
+$displayEmail = htmlspecialchars($dbUserEmail ?? AuthSession::getUserData('user_email') ?? 'N/A');
+
+// Now include the view
+include_once '../View/manageUsersView.php';
+
+
 // Pass initial paginated data and pagination info to the view
 include __DIR__ . '/../View/manageUsersView.php';
 
