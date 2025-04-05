@@ -162,28 +162,128 @@ class Company {
             return false;
         }
     }
-    // Inside your Company model (src/Model/company.php)
-public function getCompanyAverageRating($company_id) {
-    try {
-        $sql = "SELECT AVG(rating_value) as average, COUNT(*) as count
-                FROM company_ratings
-                WHERE company_id = :company_id";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':company_id', $company_id, PDO::PARAM_INT);
-        $stmt->execute();
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        // Return both average and count, handle case with no ratings
-        return [
-            'average' => ($result && $result['count'] > 0) ? round((float)$result['average'], 2) : null,
-            'count' => ($result) ? (int)$result['count'] : 0
-        ];
-    } catch (PDOException $e) {
-        $this->error = "Error getting average rating: " . $e->getMessage();
-        error_log($this->error);
-        return ['average' => null, 'count' => 0];
-    }
-}
+    // *** NEW RATING METHODS ***
 
+    /**
+     * Get the average rating and count for a specific company.
+     *
+     * @param int $companyId
+     * @return array ['average' => float|null, 'count' => int]
+     */
+    public function getCompanyAverageRating($companyId) {
+        if (!filter_var($companyId, FILTER_VALIDATE_INT)) {
+             $this->error = 'Invalid company ID for rating.';
+             return ['average' => null, 'count' => 0];
+         }
+        try {
+            $sql = "SELECT AVG(rating_value) as average, COUNT(*) as count
+                    FROM company_ratings
+                    WHERE company_id = :company_id";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':company_id', $companyId, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // Return formatted results
+            return [
+                'average' => ($result && $result['count'] > 0) ? round((float)$result['average'], 2) : null,
+                'count' => ($result) ? (int)$result['count'] : 0
+            ];
+        } catch (PDOException $e) {
+            $this->error = "Error getting average rating: " . $e->getMessage();
+            error_log($this->error);
+            return ['average' => null, 'count' => 0]; // Return default on error
+        }
+    }
+
+    /**
+     * Check if a specific student has already rated a specific company.
+     *
+     * @param int $studentId
+     * @param int $companyId
+     * @return bool True if rated, false otherwise or on error.
+     */
+    public function hasStudentRatedCompany($studentId, $companyId) {
+        if (!filter_var($studentId, FILTER_VALIDATE_INT) || !filter_var($companyId, FILTER_VALIDATE_INT)) {
+            $this->error = 'Invalid student or company ID for checking rating.';
+            return false; // Or perhaps throw an exception depending on desired handling
+        }
+         try {
+             $sql = "SELECT COUNT(*) FROM company_ratings
+                     WHERE student_id = :student_id AND company_id = :company_id";
+             $stmt = $this->conn->prepare($sql);
+             $stmt->bindParam(':student_id', $studentId, PDO::PARAM_INT);
+             $stmt->bindParam(':company_id', $companyId, PDO::PARAM_INT);
+             $stmt->execute();
+             return (int)$stmt->fetchColumn() > 0;
+         } catch (PDOException $e) {
+             $this->error = "Error checking if student rated company: " . $e->getMessage();
+             error_log($this->error);
+             return false; // Treat error as "not rated" for safety, but log it
+         }
+     }
+
+     /**
+      * Add a new rating for a company by a student.
+      *
+      * @param int $companyId
+      * @param int $studentId
+      * @param int $ratingValue (1-5)
+      * @param string|null $comment
+      * @return bool True on success, false on failure.
+      */
+     public function addRating($companyId, $studentId, $ratingValue, $comment = null) {
+          // Validate input
+         if (!filter_var($companyId, FILTER_VALIDATE_INT) || !filter_var($studentId, FILTER_VALIDATE_INT)) {
+             $this->error = "Invalid company or student ID."; return false;
+         }
+         if (!filter_var($ratingValue, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 5]])) {
+             $this->error = "Invalid rating value. Must be between 1 and 5."; return false;
+         }
+         $comment = ($comment === null) ? null : $this->sanitize(trim($comment)); // Sanitize comment
+
+         try {
+             // Optional: Check if already rated first if you don't rely solely on UNIQUE constraint
+             // if ($this->hasStudentRatedCompany($studentId, $companyId)) {
+             //     $this->error = "You have already rated this company.";
+             //     return false;
+             // }
+
+             $sql = "INSERT INTO company_ratings (company_id, student_id, rating_value, comment)
+                     VALUES (:company_id, :student_id, :rating_value, :comment)";
+              // Using INSERT IGNORE is another way to handle duplicates if UNIQUE constraint exists
+             // $sql = "INSERT IGNORE INTO company_ratings ...";
+
+             $stmt = $this->conn->prepare($sql);
+             $stmt->bindParam(':company_id', $companyId, PDO::PARAM_INT);
+             $stmt->bindParam(':student_id', $studentId, PDO::PARAM_INT);
+             $stmt->bindParam(':rating_value', $ratingValue, PDO::PARAM_INT);
+             $stmt->bindValue(':comment', $comment, $comment === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+
+             $stmt->execute();
+             // Check if insert worked (rowCount > 0 if not using INSERT IGNORE)
+             return $stmt->rowCount() > 0;
+
+         } catch (PDOException $e) {
+             // Check for duplicate entry if UNIQUE constraint is active
+             if ($e->getCode() == 23000 || (isset($e->errorInfo[1]) && $e->errorInfo[1] == 1062)) {
+                 $this->error = "You have already rated this company.";
+             }
+             // Check for foreign key violations (e.g., student or company doesn't exist)
+             elseif (isset($e->errorInfo[1]) && ($e->errorInfo[1] == 1452)) {
+                  $this->error = "Invalid company or student reference for rating.";
+             }
+              else {
+                 $this->error = "Database error adding rating.";
+             }
+             error_log("DB Error addRating: " . $e->getMessage());
+             return false;
+         } catch (Exception $e) {
+             $this->error = 'An unexpected error occurred while adding rating: ' . $e->getMessage();
+             error_log("General Error addRating: " . $e->getMessage());
+             return false;
+         }
+     }
 
 }
 
