@@ -3,7 +3,7 @@
 /* =========================================
    Global / Basic Styles
    ========================================= */
-body {
+   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     margin: 0;
     padding: 0; /* Body padding can be added if needed, but container handles content padding */
@@ -16,7 +16,7 @@ body {
    Layout Container (Used in Edit/Manage views)
    ========================================= */
 .container {
-    max-width: 800px; /* Max width for edit forms */
+    max-width: 1200px; /* Adjusted for manage view potentially */
     margin: 30px auto; /* Centering with space */
     background-color: #ffffff;
     padding: 30px 40px; /* Generous padding */
@@ -25,6 +25,12 @@ body {
     border: 1px solid #e3e6f0;
 }
 
+/* Adjust container width specifically for edit forms if needed */
+body.edit-view .container { /* Add 'edit-view' class to body in editUserView.php if needed */
+     max-width: 800px;
+}
+
+
 /* =========================================
    Headings & Links
    ========================================= */
@@ -32,9 +38,12 @@ h1, h2 {
     color: #4a4a4a;
     border-bottom: 1px solid #e3e6f0;
     padding-bottom: 12px;
-    margin-top: 0;
+    margin-top: 0; /* Adjust margin-top for first heading maybe */
     margin-bottom: 30px;
     font-weight: 500;
+}
+h1:first-of-type, h2:first-of-type { /* More reliable than :first-child */
+     margin-top: 0;
 }
 
 h2 {
@@ -42,14 +51,14 @@ h2 {
 }
 
 a {
-    color: #007bff;
+    color: #4e73df; /* Using primary color from back-link for consistency */
     text-decoration: none;
     transition: color 0.2s ease;
 }
 
 a:hover {
-    color: #0056b3;
-    text-decoration: underline;
+    color: #2e59d9; /* Darker primary */
+    text-decoration: none; /* Keep underline off unless specific */
 }
 
 .back-link {
@@ -60,6 +69,7 @@ a:hover {
 }
 .back-link:hover {
     color: #2e59d9;
+    text-decoration: underline; /* Add underline on hover for back link */
 }
 .back-link i {
     margin-right: 6px;
@@ -95,14 +105,14 @@ a:hover {
 }
 
 /* =========================================
-   Forms (Specific for Edit View)
+   Forms (Applies to Add User and Edit User)
    ========================================= */
-.form-container { /* Optional wrapper if needed, but styles applied directly to container */
-    /* background-color: #f8f9fa; */ /* No extra background needed if inside .container */
-    /* padding: 20px; */
-    /* border-radius: 5px; */
-    /* margin-bottom: 30px; */
-    /* border: 1px solid #dee2e6; */
+.form-container { /* Styles for Add User Form wrapper */
+    background-color: #f8f9fc; /* Light background for form area */
+    padding: 25px 30px;
+    border-radius: 5px;
+    margin-bottom: 40px; /* Space below Add form */
+    border: 1px solid #e3e6f0;
 }
 
 .form-group {
@@ -145,13 +155,15 @@ a:hover {
     background-color: #fff; /* Ensure white background */
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+/* Apply focus styles only to non-readonly/disabled */
+.form-group input:focus:not([readonly]),
+.form-group select:focus:not([disabled]),
+.form-group textarea:focus:not([readonly]) {
      border-color: #a4b7ff; /* Lighter blue focus */
      outline: 0;
      box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25); /* Match primary color */
 }
+
 
 .form-group textarea {
     min-height: 100px;
@@ -182,13 +194,17 @@ a:hover {
  }
 
 
-/* --- Readonly Input Style --- */
- .form-group input[readonly] {
+/* --- Readonly/Disabled Input Style --- */
+ .form-group input[readonly],
+ .form-group textarea[readonly],
+ .form-group select[disabled] {
     background-color: #eaecf4; /* Slightly different background */
     cursor: not-allowed;
     opacity: 0.8;
 }
- .form-group input[readonly]:focus {
+ .form-group input[readonly]:focus,
+ .form-group textarea[readonly]:focus,
+ .form-group select[disabled]:focus {
       box-shadow: none;
       border-color: #d1d3e2;
  }
@@ -237,7 +253,7 @@ a:hover {
 }
 
 /* =========================================
-   Submit Button
+   Submit & Action Buttons
    ========================================= */
 button[type="submit"] {
     background-color: #1cc88a; /* Success green */
@@ -259,25 +275,95 @@ button[type="submit"] i {
     margin-right: 8px;
 }
 
-/* =========================================
-   Header Styles (If needed standalone) - Mostly matching dashboard views
-   ========================================= */
-header { /* If you add a header to the edit page */
-    background-color: #4e73df; /* Example primary color */
-    color: white;
-    padding: 10px 20px;
-    /* Add flex etc. if needed */
+/* Action buttons in tables */
+.actions a, .actions button {
+    display: inline-block;
+    padding: 6px 10px; /* Slightly more padding */
+    margin: 2px 4px 2px 0; /* Adjusted margin */
+    text-decoration: none;
+    color: #fff;
+    border-radius: 4px; /* Slightly less round */
+    border: none;
+    cursor: pointer;
+    font-size: 0.85em; /* Smaller font */
+    vertical-align: middle;
+    transition: opacity 0.2s ease;
+    line-height: 1.4; /* Ensure consistent height */
+}
+.actions a:hover, .actions button:hover {
+    opacity: 0.85;
+    text-decoration: none;
+}
+.actions .edit-btn {
+    background-color: #f6c23e; /* Warning yellow */
+    color: #5a5c69; /* Dark text for yellow */
+}
+.actions .delete-btn {
+    background-color: #e74a3b; /* Danger red */
+}
+.actions span { /* Read-only text */
+    font-style: normal; /* Not italic */
+    color: #858796; /* Helper text color */
+    font-size: 0.85em;
+    padding: 6px 0;
+    display: inline-block;
 }
 
+
 /* =========================================
-   Footer Styles (If needed standalone)
+   Tables (Manage View)
    ========================================= */
-footer { /* If you add a footer to the edit page */
-    text-align: center;
-    margin-top: 40px;
-    padding: 20px;
-    background-color: #eaecf4;
-    color: #858796;
-    font-size: 0.9em;
-    border-top: 1px solid #d1d3e2;
+section {
+    margin-bottom: 40px;
+    background-color: #fff; /* Give sections white bg */
+    padding: 25px 30px; /* Padding inside section */
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* Consistent shadow */
+    border: 1px solid #e3e6f0;
 }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 25px; /* Space below section heading */
+    font-size: 0.95em;
+    color: #5a5c69; /* Table text color */
+}
+th, td {
+    border: 1px solid #e3e6f0; /* Use consistent light border */
+    padding: 12px 15px; /* Consistent padding */
+    text-align: left;
+    vertical-align: middle;
+}
+th {
+    background-color: #f8f9fc; /* Very light grey header */
+    font-weight: 600; /* Bolder header */
+    color: #5a5c69;
+    text-transform: uppercase; /* Optional */
+    font-size: 0.85em; /* Smaller header text */
+    letter-spacing: 0.5px;
+}
+/* Remove alternating row color for cleaner look - Optional */
+/* tr:nth-child(even) { background-color: #f9f9f9; } */
+
+td {
+    word-break: break-word;
+}
+
+
+/* =========================================
+   Password Strength Indicator (Reuse from previous)
+   ========================================= */
+.password-strength-indicator {
+    display: block;
+    margin-top: 8px; /* Match label bottom margin */
+    font-size: 0.9em;
+    height: 1.2em;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+.password-strength-indicator.weak { color: #e74a3b; } /* Danger Red */
+.password-strength-indicator.medium { color: #f6c23e; } /* Warning Yellow */
+.password-strength-indicator.strong { color: #1cc88a; } /* Success Green */
+
+

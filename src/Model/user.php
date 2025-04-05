@@ -183,5 +183,145 @@ class User {
     public function deletePilote($id_pilote) { /* ... */ }
     public function deleteAdmin($id_admin) { /* ... */ }
 
+    // --- Add or Modify these methods for Pagination ---
+
+    /**
+     * Get a paginated list of students.
+     * @param int $limit Number of records per page.
+     * @param int $offset Starting record number.
+     * @param int|null $creatorPiloteId Optional filter by creator pilote ID.
+     * @return array|false Array of students or false on failure.
+     */
+    public function getStudentsPaginated($limit, $offset, $creatorPiloteId = null) {
+        try {
+            $sql = "SELECT id_student, name, email, year, school, location, created_by_pilote_id
+                    FROM student";
+            $params = [];
+            if ($creatorPiloteId !== null) {
+                $sql .= " WHERE created_by_pilote_id = :creator_id";
+                $params[':creator_id'] = $creatorPiloteId;
+            }
+            $sql .= " ORDER BY name ASC LIMIT :limit OFFSET :offset";
+
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value);
+            }
+
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            $this->error = "Error fetching paginated students: " . $e->getMessage();
+            error_log($this->error);
+            return false;
+        }
+    }
+
+    /**
+     * Get the total count of students.
+     * @param int|null $creatorPiloteId Optional filter by creator pilote ID.
+     * @return int|false Total count or false on failure.
+     */
+    public function getTotalStudentsCount($creatorPiloteId = null) {
+        try {
+            $sql = "SELECT COUNT(*) FROM student";
+            $params = [];
+            if ($creatorPiloteId !== null) {
+                $sql .= " WHERE created_by_pilote_id = :creator_id";
+                $params[':creator_id'] = $creatorPiloteId;
+            }
+            $stmt = $this->conn->prepare($sql);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value);
+            }
+            $stmt->execute();
+            return (int) $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            $this->error = "Error counting students: " . $e->getMessage();
+            error_log($this->error);
+            return false;
+        }
+    }
+
+    /**
+     * Get a paginated list of pilotes.
+     * @param int $limit Number of records per page.
+     * @param int $offset Starting record number.
+     * @return array|false Array of pilotes or false on failure.
+     */
+    public function getPilotesPaginated($limit, $offset) {
+        try {
+            $sql = "SELECT id_pilote, name, email, location
+                    FROM pilote
+                    ORDER BY name ASC LIMIT :limit OFFSET :offset";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            $this->error = "Error fetching paginated pilotes: " . $e->getMessage();
+            error_log($this->error);
+            return false;
+        }
+    }
+
+    /**
+     * Get the total count of pilotes.
+     * @return int|false Total count or false on failure.
+     */
+    public function getTotalPilotesCount() {
+        try {
+            $sql = "SELECT COUNT(*) FROM pilote";
+            $stmt = $this->conn->query($sql);
+            return (int) $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            $this->error = "Error counting pilotes: " . $e->getMessage();
+            error_log($this->error);
+            return false;
+        }
+    }
+
+    /**
+     * Get a paginated list of admins.
+     * @param int $limit Number of records per page.
+     * @param int $offset Starting record number.
+     * @return array|false Array of admins or false on failure.
+     */
+    public function getAdminsPaginated($limit, $offset) {
+        try {
+            $sql = "SELECT id_admin, name, email
+                    FROM admin
+                    ORDER BY name ASC LIMIT :limit OFFSET :offset";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            $this->error = "Error fetching paginated admins: " . $e->getMessage();
+            error_log($this->error);
+            return false;
+        }
+    }
+
+    /**
+     * Get the total count of admins.
+     * @return int|false Total count or false on failure.
+     */
+    public function getTotalAdminsCount() {
+        try {
+            $sql = "SELECT COUNT(*) FROM admin";
+            $stmt = $this->conn->query($sql);
+            return (int) $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            $this->error = "Error counting admins: " . $e->getMessage();
+            error_log($this->error);
+            return false;
+        }
+    }
+
 } // End Class User
 ?>

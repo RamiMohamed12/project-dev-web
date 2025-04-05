@@ -7,11 +7,11 @@
 // $pageTitle, $errorMessage, $successMessage
 
 // Prevent direct access / access by students
-if (!isset($loggedInUserRole) || !in_array($loggedInUserRole, ['admin', 'pilote'])) {
-    die("Access Denied.");
+if (!isset($loggedInUserRole) || !in_array($loggedInUserRole, ['admin', 'pilote']) || !isset($loggedInUserId)) {
+    die("Access Denied or required data missing.");
 }
 
-$defaultCompanyPic = 'images/default_company.png'; // ** Relative path from THIS file **
+$defaultCompanyPic = 'images/default_company.png'; // ** Relative path from THIS file's location in View folder **
 
 ?>
 <!DOCTYPE html>
@@ -47,7 +47,7 @@ $defaultCompanyPic = 'images/default_company.png'; // ** Relative path from THIS
         .actions .delete-btn { background-color: #dc3545; }
         .actions .delete-btn:hover { background-color: #c82333; }
         .actions .edit-btn:hover { background-color: #e0a800; }
-        .actions span { font-style: italic; color: #6c757d; font-size: 0.9em; }
+        .actions span.no-permission { font-style: italic; color: #6c757d; font-size: 0.9em; } /* Adjusted class name */
         .form-container { background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 30px; border: 1px solid #dee2e6; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold;}
@@ -60,7 +60,7 @@ $defaultCompanyPic = 'images/default_company.png'; // ** Relative path from THIS
 
     </style>
 </head>
-<body class="<?= $loggedInUserRole === 'admin' ? 'admin-theme' : 'pilote-theme' ?>"> 
+<body class="<?= $loggedInUserRole === 'admin' ? 'admin-theme' : 'pilote-theme' ?>">
 
     <div class="container">
          <!-- Back Link -->
@@ -76,7 +76,8 @@ $defaultCompanyPic = 'images/default_company.png'; // ** Relative path from THIS
          <!-- Add Internship Form -->
          <div class="form-container">
             <h2><i class="fa-solid fa-plus-circle"></i> Add New Internship Offer</h2>
-            <form method="post" action="internshipController.php">                  <input type="hidden" name="action" value="add">
+            <form method="post" action="internshipController.php">
+                 <input type="hidden" name="action" value="add">
 
                  <div class="form-group">
                      <label for="add_id_company"><i class="fa-regular fa-building"></i> Company:</label>
@@ -125,39 +126,63 @@ $defaultCompanyPic = 'images/default_company.png'; // ** Relative path from THIS
                         <th class="date-col">Offer Date</th>
                         <?php if ($loggedInUserRole === 'admin'): ?>
                             <th>Offer Creator</th>
-                            <th>Company Creator</th>
+                            <th>Company Manager</th>
                         <?php endif; ?>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (is_array($internships) && !empty($internships)): ?>
-                        <?php foreach ($internships as $offer):
-                            // Determine if current user can modify this offer
-                            $canModify = ($loggedInUserRole === 'admin' || ($loggedInUserRole === 'pilote' && isset($offer['company_creator_id']) && $offer['company_creator_id'] == $loggedInUserId));
-                        ?>
+                        <?php foreach ($internships as $offer): ?>
+                            <?php
+                                // Determine if current user can modify this offer
+                                $canModify = false;
+                                if ($loggedInUserRole === 'admin') {
+                                    $canModify = true;
+                                } elseif ($loggedInUserRole === 'pilote') {
+                                    // Allow if pilote created the COMPANY or the INTERNSHIP
+                                    if ((isset($offer['company_creator_id']) && $offer['company_creator_id'] == $loggedInUserId) ||
+                                        (isset($offer['created_by_pilote_id']) && $offer['created_by_pilote_id'] == $loggedInUserId)) {
+                                        $canModify = true;
+                                    }
+                                }
+                            ?>
                             <tr>
                                 <td><?= htmlspecialchars($offer['id_internship']) ?></td>
                                 <td><?= htmlspecialchars($offer['title']) ?></td>
                                 <td>
-                                    <?php /* Display company logo placeholder */ ?>
+                                    <?php /* Display company logo placeholder - assuming $defaultCompanyPic is set */ ?>
                                     <img src="<?= $defaultCompanyPic ?>" alt="Logo" class="company-logo-list" title="<?= !empty($offer['company_picture_mime']) ? 'Logo available' : 'No logo' ?>">
                                     <?= htmlspecialchars($offer['name_company'] ?? 'N/A') ?>
-                                    <br><small style="color: #6c757d;"><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($offer['company_location'] ?? '') ?></small>
+                                    <br><small style="color: #6c757d;"><i class="fa-solid fa-location-dot"></i> <?= htmlspecialchars($offer['company_location'] ?? '') /* Assuming company_location exists */ ?></small>
                                 </td>
                                 <td><div class="description-preview" title="<?= htmlspecialchars($offer['description']) ?>"><?= nl2br(htmlspecialchars($offer['description'])) ?></div></td>
                                 <td class="remuneration-col"><?= $offer['remuneration'] !== null ? htmlspecialchars(number_format($offer['remuneration'], 2)) : '-' ?></td>
                                 <td class="date-col"><?= htmlspecialchars($offer['offre_date']) ?></td>
+
                                 <?php if ($loggedInUserRole === 'admin'): ?>
-                                    <td><?= htmlspecialchars($offer['created_by_pilote_id'] ?? 'Admin') ?></td>
-                                    <td><?= htmlspecialchars($offer['company_creator_id'] ?? 'Admin/Old') ?></td>
+                                    <?php // Display creator info for Admin view
+                                        $offerCreatorText = 'Admin';
+                                        if (isset($offer['created_by_pilote_id']) && $offer['created_by_pilote_id']) {
+                                            $offerCreatorText = 'Pilote: ' . htmlspecialchars($offer['created_by_pilote_id']);
+                                        }
+                                        $companyManagerText = 'Admin/Old';
+                                         if (isset($offer['company_creator_id']) && $offer['company_creator_id'] !== null) {
+                                             $companyManagerText = 'Pilote: ' . htmlspecialchars($offer['company_creator_id']);
+                                         } elseif (isset($offer['company_creator_id']) && $offer['company_creator_id'] === null) {
+                                              $companyManagerText = 'Admin';
+                                         }
+                                    ?>
+                                    <td><?= $offerCreatorText ?></td>
+                                    <td><?= $companyManagerText ?></td>
                                 <?php endif; ?>
+
                                 <td class="actions">
                                      <?php if ($canModify): ?>
                                         <a href="internshipController.php?action=edit&id=<?= $offer['id_internship'] ?>" class="edit-btn">
                                             <i class="fa-solid fa-pen-to-square"></i> Edit
                                         </a>
-                                        
+
                                         <form method="post" action="internshipController.php" style="display:inline;">
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="id" value="<?= $offer['id_internship'] ?>">
@@ -166,15 +191,15 @@ $defaultCompanyPic = 'images/default_company.png'; // ** Relative path from THIS
                                             </button>
                                         </form>
                                      <?php else: ?>
-                                        <span><i class="fa-solid fa-lock"></i> No permission</span>
+                                        <span class="no-permission"><i class="fa-solid fa-lock"></i> No permission</span>
                                      <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="<?= ($loggedInUserRole === 'admin') ? 9 : 7 ?>"> 
-                                No internship offers found<?= ($loggedInUserRole === 'pilote') ? ' for companies you manage' : '' ?>.
+                            <td colspan="<?= ($loggedInUserRole === 'admin') ? 9 : 7 ?>">
+                                No internship offers found<?= ($loggedInUserRole === 'pilote') ? ' matching your criteria' : '' ?>.
                             </td>
                         </tr>
                     <?php endif; ?>
@@ -184,7 +209,7 @@ $defaultCompanyPic = 'images/default_company.png'; // ** Relative path from THIS
 
     </div> <!-- /.container -->
 
-    
-     <script src="../View/script.js"></script> 
+
+     <script src="../View/script.js"></script>
 </body>
 </html>

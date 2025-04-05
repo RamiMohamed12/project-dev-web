@@ -8,9 +8,10 @@
 // $errorMessage (string)
 // $successMessage (string) - Although typically not shown directly on edit page
 // $loggedInUserRole (string 'admin' or 'pilote')
+// $loggedInUserId (int) - Needed for permission check
 
 // Prevent direct access & ensure required data exists
-if (!isset($internshipDetails) || !isset($companiesList) || !isset($loggedInUserRole)) {
+if (!isset($internshipDetails) || !isset($companiesList) || !isset($loggedInUserRole) || !isset($loggedInUserId)) {
     die("Direct access not permitted or required data missing.");
 }
 
@@ -47,6 +48,10 @@ $backText = 'Back to Internship List';
         .back-link { display: inline-block; margin-bottom: 25px; text-decoration: none; color: #007bff; font-size: 1.1em; }
         .back-link:hover { text-decoration: underline; }
         .back-link i { margin-right: 5px; }
+        /* Style for delete button */
+        .delete-action a { background-color: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1.05em; text-decoration: none; display: inline-block; margin-left: 10px; }
+        .delete-action a:hover { background-color: #c82333; }
+        .delete-action i { margin-right: 8px; }
     </style>
 </head>
 <body class="<?= $loggedInUserRole === 'admin' ? 'admin-theme' : 'pilote-theme' ?>"> {/* Apply theme */}
@@ -58,9 +63,7 @@ $backText = 'Back to Internship List';
         <h2><?= htmlspecialchars($pageTitle) ?></h2>
 
         <?php if (!empty($errorMessage)): ?><div class="message error-message"><i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($errorMessage) ?></div><?php endif; ?>
-        <?php /* Success messages usually shown on redirect, but uncomment if needed here
-        <?php if (!empty($successMessage)): ?><div class="message success-message"><i class="fa-solid fa-check-circle"></i> <?= htmlspecialchars($successMessage) ?></div><?php endif; ?>
-        */ ?>
+        <?php /* Success messages usually shown on redirect */ ?>
 
         <form method="post" action="internshipController.php"> {/* Always submit to controller */}
             <input type="hidden" name="action" value="update">
@@ -111,38 +114,62 @@ $backText = 'Back to Internship List';
              </div>
 
              <?php
-                 // Display creator IDs if admin is editing (fetched via JOIN in read method)
+                 // Display creator IDs if admin is editing
                  if ($loggedInUserRole === 'admin') {
+                     $offerCreatorText = 'Admin';
                      if (isset($internshipDetails['created_by_pilote_id']) && $internshipDetails['created_by_pilote_id']) {
-                         echo '<p><small>Offer created by Pilote ID: ' . htmlspecialchars($internshipDetails['created_by_pilote_id']) . '</small></p>';
-                     } else {
-                         echo '<p><small>Offer created by: Admin</small></p>';
+                         $offerCreatorText = 'Pilote ID: ' . htmlspecialchars($internshipDetails['created_by_pilote_id']);
                      }
-                     if (isset($internshipDetails['company_creator_id']) && $internshipDetails['company_creator_id']) {
-                         echo '<p><small>Company managed by Pilote ID: ' . htmlspecialchars($internshipDetails['company_creator_id']) . '</small></p>';
+                     echo '<p><small>Offer created by: ' . $offerCreatorText . '</small></p>';
+
+                     $companyManagerText = 'Admin/Old'; // Default if not set
+                     if (isset($internshipDetails['company_creator_id']) && $internshipDetails['company_creator_id'] !== null) {
+                         $companyManagerText = 'Pilote ID: ' . htmlspecialchars($internshipDetails['company_creator_id']);
                      } elseif (isset($internshipDetails['company_creator_id']) && $internshipDetails['company_creator_id'] === null) {
-                          echo '<p><small>Company managed by: Admin</small></p>';
+                          $companyManagerText = 'Admin'; // Explicitly Admin
                      }
+                     echo '<p><small>Company managed by: ' . $companyManagerText . '</small></p>';
                  }
              ?>
 
             <button type="submit"><i class="fa-solid fa-save"></i> Update Internship Offer</button>
-            
-            <?php if ($loggedInUserRole === 'admin' || ($loggedInUserRole === 'pilote' && isset($internshipDetails['company_creator_id']) && $internshipDetails['company_creator_id'] == $loggedInUserId)): ?>
-                <a href="#" onclick="if(confirm('Are you sure you want to delete this internship offer?')) { document.getElementById('delete-form').submit(); } return false;" 
-                   style="background-color: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1.05em; text-decoration: none; display: inline-block; margin-left: 10px;">
-                    <i class="fa-solid fa-trash-alt"></i> Delete
-                </a>
-                
-                <form id="delete-form" method="post" action="internshipController.php" style="display:none;">
-                    <input type="hidden" name="action" value="delete">
-                    <input type="hidden" name="id" value="<?= htmlspecialchars($internshipDetails['id_internship']) ?>">
-                </form>
-            <?php endif; ?>
-        </form>
+
+            <!-- Delete Button Area -->
+            <span class="delete-action">
+                <?php
+                    // Determine if the delete button should be shown based on controller logic
+                    $showDeleteButton = false;
+                    if ($loggedInUserRole === 'admin') {
+                        $showDeleteButton = true;
+                    } elseif ($loggedInUserRole === 'pilote') {
+                        // Show if pilote created the company OR the internship
+                        if ((isset($internshipDetails['company_creator_id']) && $internshipDetails['company_creator_id'] == $loggedInUserId) ||
+                            (isset($internshipDetails['created_by_pilote_id']) && $internshipDetails['created_by_pilote_id'] == $loggedInUserId)) {
+                            $showDeleteButton = true;
+                        }
+                    }
+                ?>
+                <?php if ($showDeleteButton): ?>
+                    <a href="#" onclick="if(confirm('Are you sure you want to delete this internship offer?')) { document.getElementById('delete-form-<?= htmlspecialchars($internshipDetails['id_internship']) ?>').submit(); } return false;">
+                        <i class="fa-solid fa-trash-alt"></i> Delete
+                    </a>
+                <?php endif; ?>
+            </span>
+            <!-- End Delete Button Area -->
+
+        </form> <!-- End Main Update Form -->
+
+        <!-- Hidden Delete Form -->
+        <?php if ($showDeleteButton): // Only render the form if the button is shown ?>
+            <form id="delete-form-<?= htmlspecialchars($internshipDetails['id_internship']) ?>" method="post" action="internshipController.php" style="display:none;">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="id" value="<?= htmlspecialchars($internshipDetails['id_internship']) ?>">
+            </form>
+        <?php endif; ?>
+        <!-- End Hidden Delete Form -->
+
     </div>
 
-    {/* Include script.js if needed for any client-side enhancements */}
     {/* <script src="../View/script.js"></script> */}
 </body>
 </html>
