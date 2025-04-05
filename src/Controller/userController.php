@@ -3,10 +3,8 @@
 
 // --- Required Includes & Session Start ---
 require_once __DIR__ . '/../../config/config.php'; // DB Connection ($conn)
-require_once __DIR__ . '/../Model/user.php';      // User Model
+require_once __DIR__ . '/../Model/user.php';      // User Model (Ensure it has paginated methods)
 require_once __DIR__ . '/../Auth/AuthSession.php'; // Session utilities
-// AuthCheck might not be strictly needed here as we do more specific checks, but include for consistency if desired
-// require_once __DIR__ . '/../Auth/AuthCheck.php';
 
 // Start session VERY FIRST to access logged-in user data
 if (session_status() == PHP_SESSION_NONE) {
@@ -15,8 +13,6 @@ if (session_status() == PHP_SESSION_NONE) {
 
 // --- Basic Auth Check (Ensure user is logged in) ---
 if (!AuthSession::isUserLoggedIn()) {
-    // Redirect to login if no valid session exists
-    // Path is correct: Up one level from Controller, down into View
     header("Location: ../View/login.php?error=" . urlencode("Authentication required for user management."));
     exit();
 }
@@ -27,11 +23,9 @@ $loggedInUserId = AuthSession::getUserData('user_id');   // The ID of the logged
 
 // --- Authorization Check (Only Admins or Pilotes can access this controller) ---
 if ($loggedInUserRole !== 'admin' && $loggedInUserRole !== 'pilote') {
-    // Students or other roles should not be here
-     AuthSession::destroySession(); // Log them out for safety
-     // Correct path to the login view
-     header("Location: ../View/login.php?error=" . urlencode("Access Denied: Insufficient privileges for user management."));
-     exit();
+    AuthSession::destroySession(); // Log them out for safety
+    header("Location: ../View/login.php?error=" . urlencode("Access Denied: Insufficient privileges for user management."));
+    exit();
 }
 
 
@@ -48,14 +42,25 @@ try {
 
 
 // --- Initialize Variables for the View ---
-$students = []; $pilotes = []; $admins = [];
-$pageTitle = "User Management";
+$pageTitle = "User Management"; // Default Title
 $canManageAdmins = ($loggedInUserRole === 'admin');
 $canManagePilotes = ($loggedInUserRole === 'admin');
 $errorMessage = '';
 $successMessage = '';
 
-// Populate messages from GET parameters
+// --- Pagination Variables ---
+$itemsPerPage = 4;          // Set items per page (consistent with AJAX endpoint)
+$initialPage = 1;
+$initialOffset = 0; // Offset for the first page
+
+// Arrays to hold initial data and pagination info
+$students = []; $pilotes = []; $admins = [];
+$studentPagination = ['currentPage' => $initialPage, 'totalPages' => 0, 'totalUsers' => 0, 'itemsPerPage' => $itemsPerPage];
+$pilotePagination = ['currentPage' => $initialPage, 'totalPages' => 0, 'totalUsers' => 0, 'itemsPerPage' => $itemsPerPage];
+$adminPagination = ['currentPage' => $initialPage, 'totalPages' => 0, 'totalUsers' => 0, 'itemsPerPage' => $itemsPerPage];
+
+
+// --- Populate messages from GET parameters ---
 if(isset($_GET['update']) && $_GET['update'] == 'success') { $successMessage = "User updated successfully."; }
 elseif (isset($_GET['delete']) && $_GET['delete'] == 'success') { $successMessage = "User deleted successfully."; }
 elseif (isset($_GET['add']) && $_GET['add'] == 'success') { $successMessage = "User added successfully."; }
@@ -63,18 +68,17 @@ elseif (isset($_GET['error'])) { $errorMessage = htmlspecialchars(urldecode($_GE
 
 
 // --- Handle POST Actions (Add User, Delete User) ---
+// This logic remains the same as your original file
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
     $action = $_POST['action'];
 
-    // =========================================
     // --- ACTION: Add User ---
-    // =========================================
     if ($action == 'add') {
         $typeToAdd = $_POST['type'] ?? null; $name = $_POST['name'] ?? '';
         $email = $_POST['email'] ?? ''; $password = $_POST['password'] ?? '';
         $location = $_POST['location'] ?? null; $phone = $_POST['phone'] ?? null;
         $dob = $_POST['dob'] ?? null; $year = $_POST['year'] ?? null;
-        $description = $_POST['description'] ?? null; $school = $_POST['school'] ?? null; // Get school
+        $description = $_POST['description'] ?? null; $school = $_POST['school'] ?? null;
 
         $creatorPiloteId = ($loggedInUserRole === 'pilote') ? $loggedInUserId : null;
 
@@ -86,14 +90,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
         // Validation & Execution
         if (!$allowedToAdd) { $errorMessage = "Error: You do not have permission to add this type of user."; }
         elseif (empty($name) || empty($email) || empty($password) || empty($typeToAdd)) { $errorMessage = "Error: User Type, Name, Email, and Password are required."; }
+        // Basic Password Strength Check (Server-side) - Mirror JS check
+        elseif (strlen($password) < 8 || !preg_match('/[A-Z]/', $password) || !preg_match('/[0-9]/', $password)) {
+             $errorMessage = "Error: Password does not meet requirements (min 8 chars, 1 uppercase, 1 number).";
+        }
         else {
             $result = false;
-            try { // Wrap model calls in try-catch
+            try {
                 switch ($typeToAdd) {
                     case 'student':
                         if (empty($dob) || empty($year)) { $errorMessage = "Date of Birth and Year are required for students."; break; }
-                        // Add school validation if required when creating
-                        // if (empty($school)) { $errorMessage = "School is required for students."; break; }
                         $result = $userModel->createStudent( $name, $email, $password, $location, $phone, $dob, $year, $description, $school, $creatorPiloteId );
                         break;
                     case 'pilote':
@@ -111,15 +117,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
             }
 
             if ($result) {
-                header("Location: " . $_SERVER['PHP_SELF'] . "?add=success"); exit();
+                // Redirect cleanly after successful add
+                header("Location: userController.php?add=success"); exit();
             } elseif (empty($errorMessage)) {
                 $errorMessage = $userModel->getError() ?: "Error: Could not add the user.";
             }
         }
     }
-    // =========================================
     // --- ACTION: Delete User ---
-    // =========================================
     elseif ($action == 'delete') {
         $idToDelete = isset($_POST['id']) ? (int)$_POST['id'] : 0;
         $typeToDelete = $_POST['type'] ?? null;
@@ -127,22 +132,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
         if ($idToDelete <= 0 || !$typeToDelete) { $errorMessage = "Error: Invalid ID or type specified for deletion."; }
         else {
             $allowedToDelete = false; $itemDetails = null;
-            try { if ($typeToDelete === 'student') $itemDetails = $userModel->readStudent($idToDelete); }
-            catch (Exception $e) { error_log("Error fetching item details before delete: " . $e->getMessage()); $errorMessage = "Error verifying item for deletion."; }
+            // Fetch details needed for authorization (e.g., student's creator)
+            try {
+                if ($typeToDelete === 'student') {
+                    $itemDetails = $userModel->readStudent($idToDelete);
+                }
+                // No need to fetch details for pilote/admin deletion if only admin can delete them
+            } catch (Exception $e) {
+                error_log("Error fetching item details before delete: " . $e->getMessage());
+                $errorMessage = "Error verifying item for deletion.";
+            }
 
             if (empty($errorMessage)) {
+                // Authorization Logic
                 if ($loggedInUserRole === 'admin') {
-                    if (!($typeToDelete === 'admin' && $idToDelete === $loggedInUserId)) { $allowedToDelete = true; }
-                    else { $errorMessage = "Error: Admins cannot delete their own account via this list."; }
+                    // Admin cannot delete self via this list
+                    if (!($typeToDelete === 'admin' && $idToDelete === $loggedInUserId)) {
+                        $allowedToDelete = true;
+                    } else {
+                        $errorMessage = "Error: Admins cannot delete their own account via this list.";
+                    }
                 } elseif ($loggedInUserRole === 'pilote') {
+                    // Pilote can only delete students they created
                     if ($typeToDelete === 'student') {
-                        if ($itemDetails && isset($itemDetails['created_by_pilote_id']) && $itemDetails['created_by_pilote_id'] == $loggedInUserId) { $allowedToDelete = true; }
-                        else { $errorMessage = "Error: You can only delete students you created."; }
-                    } else { $errorMessage = "Error: Pilotes do not have permission to delete this type of user."; }
+                        if ($itemDetails && isset($itemDetails['created_by_pilote_id']) && $itemDetails['created_by_pilote_id'] == $loggedInUserId) {
+                            $allowedToDelete = true;
+                        } else {
+                            $errorMessage = "Error: You can only delete students you created.";
+                        }
+                    } else {
+                        // Pilote cannot delete pilote or admin
+                        $errorMessage = "Error: Pilotes do not have permission to delete this type of user.";
+                    }
                 }
 
-                if (!$allowedToDelete && empty($errorMessage)) { $errorMessage = "Error: You do not have permission to delete this user."; }
+                if (!$allowedToDelete && empty($errorMessage)) {
+                    // Fallback permission error
+                    $errorMessage = "Error: You do not have permission to delete this user.";
+                }
 
+                // Execute Deletion if allowed
                 if ($allowedToDelete) {
                     $result = false;
                     try {
@@ -158,11 +187,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
                     }
 
                     if ($result) {
-                        header("Location: " . $_SERVER['PHP_SELF'] . "?delete=success"); exit();
+                        // Redirect cleanly after successful delete
+                        header("Location: userController.php?delete=success"); exit();
                     } elseif (empty($errorMessage)) {
                         $errorMessage = $userModel->getError() ?: "Error: Could not delete user.";
-                         if (strpos($errorMessage, 'foreign key constraint') !== false) {
-                             $errorMessage = "Error: Cannot delete user due to related records (e.g., applications).";
+                         // Add more specific FK error message if needed
+                         if (strpos($errorMessage, 'foreign key constraint') !== false || strpos($errorMessage, 'Integrity constraint violation') !== false) {
+                             $errorMessage = "Error: Cannot delete user. They may have associated records (e.g., applications, created companies/offers). Please reassign or remove related items first.";
                          }
                     }
                 }
@@ -173,37 +204,83 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
 } // End if POST request
 
 
-// --- Fetch User Data for Display Based on Role ---
+// --- Fetch *Initial* User Data for Display Based on Role (Page 1 Only) ---
 try {
-    if ($loggedInUserRole === 'admin') {
-        $students = $userModel->getAllStudents();
-        $pilotes = $userModel->getAllPilotes();
-        $admins = $userModel->getAllAdmins();
-        $pageTitle = "Manage All Users";
-    } elseif ($loggedInUserRole === 'pilote') {
-        $students = $userModel->getAllStudents($loggedInUserId); // Filter by creator
-        $pilotes = []; // Pilotes don't see lists of other pilotes
-        $admins = [];  // Pilotes don't see lists of admins
+    $piloteIdFilter = null;
+    if ($loggedInUserRole === 'pilote') {
+        $piloteIdFilter = $loggedInUserId;
         $pageTitle = "Manage My Students";
+    } elseif ($loggedInUserRole === 'admin') {
+         $pageTitle = "Manage All Users";
     }
 
-    // Check for fetch errors (model methods return false)
-    if ($students === false || ($loggedInUserRole === 'admin' && ($pilotes === false || $admins === false))) {
-        $errorMsgFromModel = $userModel->getError();
-        $errorMessage = $errorMsgFromModel ?: "Error fetching user data for display.";
-        error_log("Error in userController fetching data: " . $errorMessage . ($errorMsgFromModel ? '' : ' (Generic)'));
-        $students = []; $pilotes = []; $admins = []; // Ensure arrays are empty on error
+    // Fetch Students (Page 1)
+    // Ensure the model methods exist: getStudentsPaginated and getTotalStudentsCount
+    $students = $userModel->getStudentsPaginated($itemsPerPage, $initialOffset, $piloteIdFilter);
+    $totalStudents = $userModel->getTotalStudentsCount($piloteIdFilter);
+    if ($students === false || $totalStudents === false) throw new Exception($userModel->getError() ?: "Failed to fetch initial student data or count.");
+    $studentPagination['totalPages'] = ($totalStudents > 0) ? ceil($totalStudents / $itemsPerPage) : 0;
+    $studentPagination['totalUsers'] = $totalStudents;
+
+    // Fetch Pilotes (Page 1 - Admin only)
+    if ($loggedInUserRole === 'admin') {
+        // Ensure the model methods exist: getPilotesPaginated and getTotalPilotesCount
+        $pilotes = $userModel->getPilotesPaginated($itemsPerPage, $initialOffset);
+        $totalPilotes = $userModel->getTotalPilotesCount();
+         if ($pilotes === false || $totalPilotes === false) throw new Exception($userModel->getError() ?: "Failed to fetch initial pilote data or count.");
+        $pilotePagination['totalPages'] = ($totalPilotes > 0) ? ceil($totalPilotes / $itemsPerPage) : 0;
+        $pilotePagination['totalUsers'] = $totalPilotes;
     }
+
+    // Fetch Admins (Page 1 - Admin only)
+    if ($loggedInUserRole === 'admin') {
+         // Ensure the model methods exist: getAdminsPaginated and getTotalAdminsCount
+        $admins = $userModel->getAdminsPaginated($itemsPerPage, $initialOffset);
+        $totalAdmins = $userModel->getTotalAdminsCount();
+         if ($admins === false || $totalAdmins === false) throw new Exception($userModel->getError() ?: "Failed to fetch initial admin data or count.");
+        $adminPagination['totalPages'] = ($totalAdmins > 0) ? ceil($totalAdmins / $itemsPerPage) : 0;
+        $adminPagination['totalUsers'] = $totalAdmins;
+    }
+
+     // --- Add 'canModify', 'user_id', 'user_type' flags for initial load ---
+     // This makes the initial data structure consistent with the AJAX response
+     foreach ($students as $key => $student) {
+         $canModify = ($loggedInUserRole === 'admin' || ($loggedInUserRole === 'pilote' && isset($student['created_by_pilote_id']) && $student['created_by_pilote_id'] == $loggedInUserId));
+         $students[$key]['canModify'] = $canModify;
+         $students[$key]['user_id'] = $student['id_student']; // Use the actual ID field name
+         $students[$key]['user_type'] = 'student';
+     }
+     if ($loggedInUserRole === 'admin') { // Only process these if admin fetched them
+         foreach ($pilotes as $key => $pilote) {
+             $pilotes[$key]['canModify'] = true; // Admin can modify all pilotes
+             $pilotes[$key]['user_id'] = $pilote['id_pilote'];
+             $pilotes[$key]['user_type'] = 'pilote';
+         }
+         foreach ($admins as $key => $admin) {
+             // Admin cannot delete self via list, but can edit
+             $admins[$key]['canModify'] = true; // Can always edit
+             // Optional: add a specific 'canDelete' flag if needed
+             // $admins[$key]['canDelete'] = !($admin['id_admin'] == $loggedInUserId);
+             $admins[$key]['user_id'] = $admin['id_admin'];
+             $admins[$key]['user_type'] = 'admin';
+         }
+     }
+
 
 } catch (Exception $e) {
-     error_log("Exception fetching user data in userController: " . $e->getMessage());
-     $errorMessage = "An unexpected error occurred while retrieving user lists.";
-     $students = []; $pilotes = []; $admins = []; // Ensure arrays are empty
+     error_log("Exception fetching initial user data in userController: " . $e->getMessage());
+     $errorMessage = "An error occurred while retrieving initial user lists. Please try refreshing. Details: " . $e->getMessage();
+     // Ensure arrays are empty on error
+     $students = []; $pilotes = []; $admins = [];
+     // Reset pagination counts
+     $studentPagination = ['currentPage' => 1, 'totalPages' => 0, 'totalUsers' => 0, 'itemsPerPage' => $itemsPerPage];
+     $pilotePagination = ['currentPage' => 1, 'totalPages' => 0, 'totalUsers' => 0, 'itemsPerPage' => $itemsPerPage];
+     $adminPagination = ['currentPage' => 1, 'totalPages' => 0, 'totalUsers' => 0, 'itemsPerPage' => $itemsPerPage];
 }
 
 
 // --- Include the View ---
-// Pass all necessary variables ($students, $pilotes, $admins, flags, messages) to the view file.
+// Pass initial paginated data and pagination info to the view
 include __DIR__ . '/../View/manageUsersView.php';
 
 ?>
