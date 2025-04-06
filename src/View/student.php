@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../config/config.php'; // Need $conn
 require_once __DIR__ . '/../Auth/AuthCheck.php';
 require_once __DIR__ . '/../Auth/AuthSession.php';
 require_once __DIR__ . '/../Model/user.php';      // To fetch user details
-require_once __DIR__ . '/../Model/application.php'; // To fetch application statistics
+require_once __DIR__ . '/../Model/Application.php'; // To fetch application statistics
 
 if (session_status() == PHP_SESSION_NONE) { session_start(); }
 
