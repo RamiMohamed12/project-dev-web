@@ -1,4 +1,4 @@
 <?php 
-header("location: src/View/login.php");
+header("location:/landing/index.html");
 exit(); 
 ?>
