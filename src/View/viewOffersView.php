@@ -231,11 +231,7 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
         </section>
 
         <div class="container">
-            <a href="../View/student.php" class="back-link">
-                <i class="fas fa-arrow-left"></i> Back to Dashboard
-            </a>
-
-            <!-- Messages -->
+                        <!-- Messages -->
             <?php if (!empty($errorMessage)): ?>
                 <div class="message error-message">
                     <i class="fas fa-exclamation-circle"></i>

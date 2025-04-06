@@ -1,3 +1,69 @@
+<?php
+// Location: src/View/myApplicationsView.php
+// Included by applicationController.php (action=myapps for Students)
+
+// Prevent direct access (optional, good practice)
+/*
+if (!isset($loggedInUserRole) || $loggedInUserRole !== 'student') {
+    // Maybe redirect to login or show an error page
+    // header('Location: ../Controller/loginController.php'); // Example redirect
+    die("Access Denied. Please log in as a student.");
+}
+*/
+
+// Define default picture paths
+$defaultCompanyPic = '../View/images/default_company.png'; // Default company logo
+$defaultUserPic = '../View/images/default_avatar.png';    // Default user avatar
+
+// --- Fetch User Details for Profile Display (Copied & Adapted) ---
+$userProfilePicSrc = $defaultUserPic; // Start with default
+$userName = 'Student';                // Default name
+$userEmail = '';                      // Default email
+
+// Check if details are needed (user is logged in) and prerequisites are met (db connection assumed available)
+// This block tries to fetch user details if they weren't explicitly passed by the controller.
+// Ideally, the controller (applicationController.php) should handle fetching and passing this data.
+if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to be passed by controller)
+    try {
+        // Ensure the User model is included only once
+        if (!class_exists('User')) {
+             require_once __DIR__ . '/../Model/user.php'; // Adjust path if needed
+        }
+        $userModel = new User($conn); // Assumes $conn is a valid PDO connection
+        $userDetails = $userModel->readStudent($loggedInUserId); // Fetch student data
+
+        if ($userDetails) {
+            // Assign to the variables used in the HTML header
+            $userName = htmlspecialchars($userDetails['name']);
+            $userEmail = htmlspecialchars($userDetails['email']);
+
+            // Check for profile picture data
+            if (!empty($userDetails['profile_picture_mime']) && !empty($userDetails['profile_picture'])) {
+                // Handle potential resource stream from database
+                $picData = is_resource($userDetails['profile_picture']) ?
+                    stream_get_contents($userDetails['profile_picture']) :
+                    $userDetails['profile_picture'];
+
+                // If picture data is successfully retrieved, create the data URI
+                if ($picData) {
+                    $userProfilePicSrc = 'data:' . htmlspecialchars($userDetails['profile_picture_mime']) .
+                        ';base64,' . base64_encode($picData);
+                }
+            }
+        }
+
+    } catch (Exception $e) {
+        // Log the error, but don't break the page; defaults will be used.
+        error_log("Error fetching student details for applications view header (ID: $loggedInUserId): " . $e->getMessage());
+        // Ensure defaults are still set in case of error
+        $userProfilePicSrc = $defaultUserPic;
+        $userName = 'Student';
+        $userEmail = '';
+    }
+}
+// --- End Fetch User Details ---
+
+?>
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
@@ -8,7 +74,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../View/css/stud.application.css">
     <style>
-       
+        /* Add any additional page-specific styles here if needed */
     </style>
 </head>
 <body>
@@ -30,7 +96,7 @@
                     <a href="../Controller/wishlistController.php?action=view" class="menu-item">Wishlist</a>
                     <a href="../Controller/applicationController.php?action=myapps" class="menu-item active">Applications</a>
                     <?php if (isset($loggedInUserId)): ?>
-                    <a href="../Controller/editUser.php?id=<?= $loggedInUserId ?>&type=student" class="menu-item">Profile</a>
+                    <a href="../Controller/editUser.php?id=<?= htmlspecialchars((string)$loggedInUserId) ?>&type=student" class="menu-item">Profile</a>
                     <?php endif; ?>
                 </div>
 
@@ -40,25 +106,23 @@
                         <input type="checkbox" id="themeToggle">
                         <span class="slider"></span>
                     </label>
-                    
+
                     <?php if (isset($loggedInUserId)): ?>
                     <div class="user-dropdown">
                         <?php
-                        $userProfilePicSrc = isset($profilePicSrc) ? $profilePicSrc : '../View/images/default_avatar.png';
-                        $userName = isset($displayName) ? $displayName : 'Student';
-                        $userEmail = isset($displayEmail) ? $displayEmail : '';
+                        // Variables ($userProfilePicSrc, $userName, $userEmail) are now prepared by the PHP block above
                         ?>
-                        <img src="<?= $userProfilePicSrc ?>" alt="Profile" class="user-avatar">
+                        <img src="<?= htmlspecialchars($userProfilePicSrc) ?>" alt="Profile" class="user-avatar">
                         <div class="dropdown-menu">
                             <div class="dropdown-header">
-                                <img src="<?= $userProfilePicSrc ?>" alt="Profile" class="dropdown-avatar">
+                                <img src="<?= htmlspecialchars($userProfilePicSrc) ?>" alt="Profile" class="dropdown-avatar">
                                 <div class="dropdown-user-info">
-                                    <div class="dropdown-user-name"><?= $userName ?></div>
-                                    <div class="dropdown-user-email"><?= $userEmail ?></div>
+                                    <div class="dropdown-user-name"><?= htmlspecialchars($userName) ?></div>
+                                    <div class="dropdown-user-email"><?= htmlspecialchars($userEmail) ?></div>
                                 </div>
                             </div>
                             <div class="dropdown-items">
-                                <a href="../Controller/editUser.php?id=<?= $loggedInUserId ?>&type=student" class="dropdown-item">
+                                <a href="../Controller/editUser.php?id=<?= htmlspecialchars((string)$loggedInUserId) ?>&type=student" class="dropdown-item">
                                     <i class="fas fa-user-edit"></i>
                                     <span>Edit Profile</span>
                                 </a>
@@ -96,7 +160,7 @@
                     <a href="../Controller/wishlistController.php?action=view" class="mobile-menu-item">Wishlist</a>
                     <a href="../Controller/applicationController.php?action=myapps" class="mobile-menu-item active">Applications</a>
                     <?php if (isset($loggedInUserId)): ?>
-                    <a href="../Controller/editUser.php?id=<?= $loggedInUserId ?>&type=student" class="mobile-menu-item">Profile</a>
+                    <a href="../Controller/editUser.php?id=<?= htmlspecialchars((string)$loggedInUserId) ?>&type=student" class="mobile-menu-item">Profile</a>
                     <?php endif; ?>
                     <a href="../Controller/logoutController.php" class="mobile-menu-item" style="color: #ef4444;">Logout <i class="fas fa-sign-out-alt"></i></a>
                 </div>
@@ -116,27 +180,20 @@
         </section>
 
         <div class="container">
-            <a href="../View/student.php" class="back-link">
-                <i class="fas fa-arrow-left"></i> Back to Dashboard
-            </a>
-            
-            <!-- Messages -->
+                       <!-- Messages -->
             <?php if (!empty($errorMessage)): ?>
                 <div class="message error-message">
                     <i class="fas fa-exclamation-circle"></i>
                     <span><?= htmlspecialchars($errorMessage) ?></span>
                 </div>
             <?php endif; ?>
-            
+
             <?php if (!empty($successMessage)): ?>
                 <div class="message success-message">
                     <i class="fas fa-check-circle"></i>
                     <span><?= htmlspecialchars($successMessage) ?></span>
                 </div>
             <?php endif; ?>
-
-            <!-- Define default company picture -->
-            <?php $defaultCompanyPic = '../View/images/default_company.png'; ?>
 
             <!-- Applications List -->
             <div class="applications-container">
@@ -152,7 +209,8 @@
                     <?php foreach ($applications as $app): ?>
                         <div class="application-card">
                             <div class="application-header">
-                                <?php 
+                                <?php
+                                // Company logo logic remains the same
                                 $companyLogoSrc = $defaultCompanyPic;
                                 if (!empty($app['company_picture']) && !empty($app['company_picture_mime'])) {
                                     $logoData = is_resource($app['company_picture']) ? stream_get_contents($app['company_picture']) : $app['company_picture'];
@@ -164,7 +222,7 @@
                                 <img src="<?= $companyLogoSrc ?>" alt="<?= htmlspecialchars($app['name_company'] ?? 'Company') ?>" class="company-logo">
                                 <h3><?= htmlspecialchars($app['title'] ?? 'Internship') ?></h3>
                             </div>
-                            
+
                             <div class="application-details">
                                 <p><strong>Company:</strong> <span><?= htmlspecialchars($app['name_company'] ?? 'N/A') ?></span></p>
                                 <p><strong>Location:</strong> <span><?= htmlspecialchars($app['company_location'] ?? 'N/A') ?></span></p>
@@ -172,13 +230,13 @@
                                 <p><strong>Duration:</strong> <span><?= htmlspecialchars($app['duration'] ?? 'N/A') ?> months</span></p>
                                 <p><strong>Applied on:</strong> <span><?= htmlspecialchars(date('F j, Y', strtotime($app['created_at'] ?? date('Y-m-d')))) ?></span></p>
                             </div>
-                            
+
                             <div class="application-status">
-                                <?php 
+                                <?php
                                 $status = $app['status'] ?? 'pending';
                                 $statusIcon = 'clock';
                                 $statusText = 'Pending';
-                                
+
                                 if ($status === 'accepted') {
                                     $statusIcon = 'check-circle';
                                     $statusText = 'Accepted';
@@ -191,7 +249,7 @@
                                     <i class="fas fa-<?= $statusIcon ?>"></i> <?= $statusText ?>
                                 </span>
                             </div>
-                            
+
                             <div class="application-content">
                                 <div class="motivation-letter">
                                     <h4>Your Motivation Letter</h4>
@@ -199,14 +257,14 @@
                                         <?= nl2br(htmlspecialchars($app['cover_letter'] ?? 'No motivation letter provided.')) ?>
                                     </div>
                                 </div>
-                                
+
                                 <?php if (!empty($app['cv'])): ?>
                                 <div class="cv-info">
                                     <h4>Your CV</h4>
-                                    <p><?= htmlspecialchars($app['cv']) ?></p>
+                                    <p><?= htmlspecialchars($app['cv']) ?></p> <!-- Assuming 'cv' is just the filename/path -->
                                 </div>
                                 <?php endif; ?>
-                                
+
                                 <?php if (!empty($app['feedback'])): ?>
                                 <div class="feedback">
                                     <h4>Feedback from Company</h4>
@@ -269,7 +327,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; <?= date('Y'); ?> Navigui - Student Internship Platform</p>
+                <p>© <?= date('Y'); ?> Navigui - Student Internship Platform</p>
                 <div class="footer-links">
                     <a href="#">Privacy Policy</a>
                     <a href="#">Terms of Service</a>
@@ -283,43 +341,73 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Theme Toggle
             const themeToggle = document.getElementById('themeToggle');
-            
-            // Check for saved theme preference or use default
-            const currentTheme = localStorage.getItem('theme') || 'light';
+            const currentTheme = localStorage.getItem('theme') || 'light'; // Default to light
+
             document.documentElement.setAttribute('data-theme', currentTheme);
-            
-            // Set toggle checked state based on current theme
             if (currentTheme === 'dark') {
                 themeToggle.checked = true;
             }
-            
+
             themeToggle.addEventListener('change', function() {
                 const newTheme = this.checked ? 'dark' : 'light';
                 document.documentElement.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
             });
-            
+
             // Mobile Menu Toggle
             const mobileToggle = document.getElementById('mobile-toggle');
             const mobileMenu = document.getElementById('mobile-menu');
-            
-            mobileToggle.addEventListener('click', function() {
-                mobileMenu.classList.toggle('active');
-                mobileToggle.classList.toggle('active');
-            });
-            
-            // Auto hide success messages after 5 seconds
-            const successMessages = document.querySelectorAll('.success-message');
-            if (successMessages.length > 0) {
-                setTimeout(function() {
-                    successMessages.forEach(message => {
-                        message.style.opacity = '0';
-                        setTimeout(() => {
-                            message.style.display = 'none';
-                        }, 300);
-                    });
-                }, 5000);
+            const navContainer = document.querySelector('.nav-container'); // Get nav container
+
+            if (mobileToggle && mobileMenu) {
+                mobileToggle.addEventListener('click', function(event) {
+                    event.stopPropagation(); // Prevent click from bubbling up
+                    mobileMenu.classList.toggle('active');
+                    mobileToggle.classList.toggle('active');
+                });
+
+                // Close menu if clicking outside of it
+                document.addEventListener('click', function(event) {
+                     const isClickInsideMenu = mobileMenu.contains(event.target);
+                     // Check if click is inside the nav container (where toggle button is)
+                     const isClickInsideNav = navContainer ? navContainer.contains(event.target) : false;
+
+                     if (mobileMenu.classList.contains('active') && !isClickInsideMenu && !isClickInsideNav) {
+                         mobileMenu.classList.remove('active');
+                         mobileToggle.classList.remove('active');
+                     }
+                });
             }
+
+             // User Dropdown Toggle (Add this if not already present/correct)
+             const userAvatar = document.querySelector('.user-avatar');
+             const dropdownMenu = document.querySelector('.dropdown-menu');
+
+             if (userAvatar && dropdownMenu) {
+                userAvatar.addEventListener('click', function(event) {
+                    event.stopPropagation(); // Prevent document click listener
+                    dropdownMenu.classList.toggle('active');
+                });
+
+                // Close dropdown if clicking outside
+                document.addEventListener('click', function(event) {
+                    if (dropdownMenu.classList.contains('active') && !dropdownMenu.contains(event.target) && event.target !== userAvatar) {
+                        dropdownMenu.classList.remove('active');
+                    }
+                });
+            }
+
+            // Auto hide success/error messages after 5 seconds
+            const messages = document.querySelectorAll('.message.success-message, .message.error-message');
+            messages.forEach(message => {
+                setTimeout(() => {
+                    message.style.transition = 'opacity 0.5s ease';
+                    message.style.opacity = '0';
+                    setTimeout(() => {
+                        message.style.display = 'none';
+                    }, 500); // Wait for transition
+                }, 5000); // 5 seconds
+            });
         });
     </script>
 </body>

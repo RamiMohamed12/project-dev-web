@@ -156,10 +156,7 @@ $defaultCompanyPic = '../View/images/default_company.png';
         </section>
 
         <div class="wishlist-container container">
-            <a href="../View/student.php" class="back-link">
-                <i class="fas fa-arrow-left"></i> Back to Dashboard
-            </a>
-            
+           
             <!-- Messages -->
             <?php if (!empty($errorMessage)): ?>
                 <div class="message error-message">
