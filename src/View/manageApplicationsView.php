@@ -103,7 +103,7 @@ $allowed_statuses = $allowed_statuses ?? ['pending', 'accepted', 'rejected'];
         .glass { background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--glass-border); }
         .table-responsive { border-radius: 0 0 16px 16px; overflow: hidden; }
         .table { margin-bottom: 0; border-color: var(--card-border); }
-        .table th, .table td { padding: 1rem 1.25rem; vertical-align: middle; font-size: 0.95rem; color: var(--text-primary); border-top-color: var(--card-border); }
+        .table th, .table td { padding: 1rem 1.25rem; vertical-align: middle; font-size: 0.95rem; color: var(--text-primary); border-top-color: var(--card-border);background-color: var(--input-bg); }
         .table thead th { background-color: var(--input-bg); color: var(--text-secondary); font-weight: 600; border-bottom-width: 1px; border-bottom-color: var(--card-border) !important; white-space: nowrap; }
         .table tbody tr:last-child td { border-bottom: none; }
         .table-hover tbody tr:hover { background-color: var(--input-bg); }

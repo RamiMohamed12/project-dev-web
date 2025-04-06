@@ -2270,14 +2270,14 @@ main {
 
 .teacher-name {
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-primary-light);
     margin: 0 0 4px 0;
     font-size: 1.1rem;
 }
 
 .teacher-title {
     font-size: 0.9rem;
-    color: var(--text-secondary);
+    color: var(--text-secondary-light);
     display: block;
 }
 
