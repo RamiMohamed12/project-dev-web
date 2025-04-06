@@ -2809,3 +2809,122 @@ main {
         max-width: 200px; /* Limit button width */
     }
 }
+
+/* Scroll Down Icon */
+.scroll-down-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 2rem;
+    animation: bounce 2s infinite;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.scroll-down-container:hover {
+    opacity: 1;
+}
+
+.scroll-down-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+}
+
+.scroll-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Scroll Reveal Animation */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease;
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Different delays for elements */
+.reveal.delay-1 {
+    transition-delay: 0.1s;
+}
+
+.reveal.delay-2 {
+    transition-delay: 0.2s;
+}
+
+.reveal.delay-3 {
+    transition-delay: 0.3s;
+}
+
+.reveal.delay-4 {
+    transition-delay: 0.4s;
+}
+
+.reveal.delay-5 {
+    transition-delay: 0.5s;
+}
+
+/* Different reveal directions */
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: all 0.8s ease;
+}
+
+.reveal-right {
+    opacity: 0;
+    transform: translateX(50px);
+    transition: all 0.8s ease;
+}
+
+.reveal-left.active, .reveal-right.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Header scrolled state */
+.header.scrolled {
+    background-color: var(--navbar-bg);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    top: 0;
+    margin-top: 0;
+    backdrop-filter: blur(10px);
+}
+
+.header.scrolled .nav-container {
+    border-radius: 0;
+    background-color: transparent;
+    box-shadow: none;
+    border: none;
+}
+
+/* Transition for smooth scrolling */
+.header, .header .nav-container {
+    transition: all 0.3s ease;
+}

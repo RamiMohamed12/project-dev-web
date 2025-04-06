@@ -695,4 +695,98 @@ if (acceptButton && cookieBanner) {
         sphereResizeTimeout = setTimeout(createSphere, 250); // Debounce resize
     });
 
+    // Scroll down icon functionality
+    const scrollDownIcon = document.querySelector('.scroll-down-container');
+    if (scrollDownIcon) {
+        scrollDownIcon.addEventListener('click', function() {
+            const companiesSection = document.getElementById('companies');
+            if (companiesSection) {
+                companiesSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    }
+
+    // Scroll reveal animations
+    function revealOnScroll() {
+        const revealElements = document.querySelectorAll('.section-header, .step-item, .featured-section, .testimonial, .faq-item, .profile-card, .integration-item');
+        
+        revealElements.forEach((element, index) => {
+            // Add reveal class if not already present
+            if (!element.classList.contains('reveal')) {
+                element.classList.add('reveal');
+                // Add different delays for a staggered effect
+                element.classList.add(`delay-${index % 5 + 1}`);
+            }
+            
+            const elementTop = element.getBoundingClientRect().top;
+            const windowHeight = window.innerHeight;
+            
+            if (elementTop < windowHeight - 100) {
+                element.classList.add('active');
+            } else {
+                element.classList.remove('active');
+            }
+        });
+        
+        // Add left/right reveal for specific sections
+        const leftRevealElements = document.querySelectorAll('.step-item:nth-child(odd), .faq-item:nth-child(odd)');
+        const rightRevealElements = document.querySelectorAll('.step-item:nth-child(even), .faq-item:nth-child(even)');
+        
+        leftRevealElements.forEach(element => {
+            if (!element.classList.contains('reveal-left')) {
+                element.classList.add('reveal-left');
+            }
+            
+            const elementTop = element.getBoundingClientRect().top;
+            const windowHeight = window.innerHeight;
+            
+            if (elementTop < windowHeight - 100) {
+                element.classList.add('active');
+            } else {
+                element.classList.remove('active');
+            }
+        });
+        
+        rightRevealElements.forEach(element => {
+            if (!element.classList.contains('reveal-right')) {
+                element.classList.add('reveal-right');
+            }
+            
+            const elementTop = element.getBoundingClientRect().top;
+            const windowHeight = window.innerHeight;
+            
+            if (elementTop < windowHeight - 100) {
+                element.classList.add('active');
+            } else {
+                element.classList.remove('active');
+            }
+        });
+    }
+
+    // Header scroll effect
+    function headerScrollEffect() {
+        const header = document.querySelector('.header');
+        if (header) {
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        }
+    }
+
+    // Run on page load and scroll
+    window.addEventListener('scroll', function() {
+        revealOnScroll();
+        headerScrollEffect();
+    });
+
+    window.addEventListener('load', function() {
+        revealOnScroll();
+        headerScrollEffect();
+    });
+
+    // Run once on page load to initialize animations
+    setTimeout(revealOnScroll, 500);
+
 }); // End DOMContentLoaded
