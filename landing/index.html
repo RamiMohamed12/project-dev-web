@@ -1,403 +1,403 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Navigui- Find Your Perfect Internship</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <!-- Floating purple accents -->
-    <div class="purple-accent accent-1"></div>
-    <div class="purple-accent accent-2"></div>
-    <div class="purple-accent accent-3"></div>
-    
-    <header class="header">
-        <nav class="navbar">
-            <div class="nav-container bento-card">
-                <!-- Logo -->
-                <a href="#" class="logo">
-                    <div class="logo-image-container">
-                        <img src="assets/logo-light-navigui-test.png" alt="Logo" class="logo-image light-logo">
-                        <img src="assets/logo-dark-navigui-test.png" alt="Logo" class="logo-image dark-logo">
+        <!DOCTYPE html>
+        <html lang="en" data-theme="light">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Navigui- Find Your Perfect Internship</title>
+            <link rel="stylesheet" href="styles.css">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        </head>
+        <body>
+            <!-- Floating purple accents -->
+            <div class="purple-accent accent-1"></div>
+            <div class="purple-accent accent-2"></div>
+            <div class="purple-accent accent-3"></div>
+            
+            <header class="header">
+                <nav class="navbar">
+                    <div class="nav-container bento-card">
+                        <!-- Logo -->
+                        <a href="#" class="logo">
+                            <div class="logo-image-container">
+                                <img src="assets/logo-light-navigui-test.png" alt="Logo" class="logo-image light-logo">
+                                <img src="assets/logo-dark-navigui-test.png" alt="Logo" class="logo-image dark-logo">
+                            </div>
+                        </a>
+
+                        <!-- Menu principal -->
+                        <div class="menu-items">
+                            <a href="#companies" class="menu-item">Companies</a>
+                            <a href="#works" class="menu-item">How it works</a>
+                            <a href="#workspace" class="menu-item">Workspace</a>
+                            <a href="#faq" class="menu-item">FAQ</a>
+                        </div>
+
+                        <!-- Auth & Theme -->
+                        <div class="nav-right">
+                            <a href="/../src/View/login.php" class="get-started-btn">Get started</a>
+                            <label class="switch">
+                                <input type="checkbox" id="themeToggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <!-- Mobile Menu Button -->
+                        <button class="hamburger-menu" aria-label="Menu">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </button>
                     </div>
-                </a>
 
-                <!-- Menu principal -->
-                <div class="menu-items">
-                    <a href="#companies" class="menu-item">Companies</a>
-                    <a href="#works" class="menu-item">How it works</a>
-                    <a href="#workspace" class="menu-item">Workspace</a>
-                    <a href="#faq" class="menu-item">FAQ</a>
-                </div>
-
-                <!-- Auth & Theme -->
-                <div class="nav-right">
-                    <a href="/../src/View/login.php" class="get-started-btn">Get started</a>
-                    <label class="switch">
-                        <input type="checkbox" id="themeToggle">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-
-                <!-- Mobile Menu Button -->
-                <button class="hamburger-menu" aria-label="Menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-            </div>
-
-            <!-- Mobile Menu -->
-            <div class="mobile-menu">
-                <div class="mobile-menu-content">
-                    <a href="#companies" class="mobile-menu-item">Companies</a>
-                    <a href="#works" class="mobile-menu-item">How it works</a>
-                    <a href="#workspace" class="mobile-menu-item">Workspace</a>
-                    <a href="#faq" class="mobile-menu-item">FAQ</a>
-                </div>
-            </div>
-        </nav>
-    </header>
-
-    <main>
-        <!-- Hero Section -->
-        <section class="hero-dark">
-            <div class="hero-background">
-                <div class="circuit-lines"></div>
-                <div class="circuit-pattern bottom-left"></div>
-                <div class="circuit-pattern bottom-right"></div>
-            </div>
-            <div class="sphere-container">
-                <div class="sphere-animation">
-                    <div class="sphere-particles"></div>
-                </div>
-            </div>
-            <div class="hero-content-wrapper">
-                <div class="hero-badge">
-                    <i class="fas fa-rocket"></i> Find Your Future
-                </div>
-                <h1>Discover Your Perfect <br><span>Internship Match</span></h1>
-                <p>
-                    Connect with thousands of opportunities from leading companies worldwide <br>
-                    and kickstart your career with the perfect internship experience.
-                </p>
-                <div class="cta-buttons">
-                    <a href="../src/View/login.php" class="cta-button animated">Get Started Today</a>
-                </div>
-            </div>
-        </section>
-
-        <!-- Big Title Section -->
-        <section class="big-title-section">
-            <div class="parallax-background">
-                <div class="stars-layer"></div>
-                <div class="glow-layer"></div>
-            </div>
-            <div class="title-container">
-                <h2 class="big-title" data-scroll="fade-in">Internship hunt got you <span>confused</span>?<br>Time to <span>Navigui</span></h2>
-                <a href="#companies" class="lets-go-btn">Let's Go</a>
-            </div>
-        </section>
-
-        <!-- Featured Internships -->
-        <section class="featured-section" id="companies">
-            <div class="container">
-                <div class="section-header centered">
-                    <h2>Connect with leading companies</h2>
-                    <p>Find internships with brands you know and use every day</p>
-                </div>
-                
-                <div class="integration-hub-wrapper">
-                    <div class="integration-center">
-                        <div class="hub-icon">
-                            <i class="fas fa-briefcase"></i>
+                    <!-- Mobile Menu -->
+                    <div class="mobile-menu">
+                        <div class="mobile-menu-content">
+                            <a href="#companies" class="mobile-menu-item">Companies</a>
+                            <a href="#works" class="mobile-menu-item">How it works</a>
+                            <a href="#workspace" class="mobile-menu-item">Workspace</a>
+                            <a href="#faq" class="mobile-menu-item">FAQ</a>
                         </div>
                     </div>
-                    
-                    <div class="connections-container">
-                        <div class="connection-lines"></div>
-                        
-                        <div class="integration-item top-left">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Google_Drive_logo.png/768px-Google_Drive_logo.png" alt="Google Drive">
+                </nav>
+            </header>
+
+            <main>
+                <!-- Hero Section -->
+                <section class="hero-dark">
+                    <div class="hero-background">
+                        <div class="circuit-lines"></div>
+                        <div class="circuit-pattern bottom-left"></div>
+                        <div class="circuit-pattern bottom-right"></div>
+                    </div>
+                    <div class="sphere-container">
+                        <div class="sphere-animation">
+                            <div class="sphere-particles"></div>
+                        </div>
+                    </div>
+                    <div class="hero-content-wrapper">
+                        <div class="hero-badge">
+                            <i class="fas fa-rocket"></i> Find Your Future
+                        </div>
+                        <h1>Discover Your Perfect <br><span>Internship Match</span></h1>
+                        <p>
+                            Connect with thousands of opportunities from leading companies worldwide <br>
+                            and kickstart your career with the perfect internship experience.
+                        </p>
+                        <div class="cta-buttons">
+                            <a href="../src/View/login.php" class="cta-button animated">Get Started Today</a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Big Title Section -->
+                <section class="big-title-section">
+                    <div class="parallax-background">
+                        <div class="stars-layer"></div>
+                        <div class="glow-layer"></div>
+                    </div>
+                    <div class="title-container">
+                        <h2 class="big-title" data-scroll="fade-in">Internship hunt got you <span>confused</span>?<br>Time to <span>Navigui</span></h2>
+                        <a href="#companies" class="lets-go-btn">Let's Go</a>
+                    </div>
+                </section>
+
+                <!-- Featured Internships -->
+                <section class="featured-section" id="companies">
+                    <div class="container">
+                        <div class="section-header centered">
+                            <h2>Connect with leading companies</h2>
+                            <p>Find internships with brands you know and use every day</p>
                         </div>
                         
-                        <div class="integration-item top-right">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Adobe_InDesign_CC_icon.svg/512px-Adobe_InDesign_CC_icon.svg.png" alt="Adobe">
-                        </div>
-                        
-                        <div class="integration-item left">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Adobe_XD_CC_icon.svg/512px-Adobe_XD_CC_icon.svg.png" alt="Adobe XD">
-                        </div>
-                        
-                        <div class="integration-item right">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" alt="Spotify">
-                        </div>
-                        
-                        <div class="integration-item bottom-left">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn">
-                        </div>
-                        
-                        <div class="integration-item bottom-right">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png" alt="Facebook">
+                        <div class="integration-hub-wrapper">
+                            <div class="integration-center">
+                                <div class="hub-icon">
+                                    <i class="fas fa-briefcase"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="connections-container">
+                                <div class="connection-lines"></div>
+                                
+                                <div class="integration-item top-left">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Google_Drive_logo.png/768px-Google_Drive_logo.png" alt="Google Drive">
+                                </div>
+                                
+                                <div class="integration-item top-right">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Adobe_InDesign_CC_icon.svg/512px-Adobe_InDesign_CC_icon.svg.png" alt="Adobe">
+                                </div>
+                                
+                                <div class="integration-item left">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Adobe_XD_CC_icon.svg/512px-Adobe_XD_CC_icon.svg.png" alt="Adobe XD">
+                                </div>
+                                
+                                <div class="integration-item right">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" alt="Spotify">
+                                </div>
+                                
+                                <div class="integration-item bottom-left">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn">
+                                </div>
+                                
+                                <div class="integration-item bottom-right">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png" alt="Facebook">
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </section>
+                </section>
 
-        <!-- How It Works -->
-        <section class="how-it-works" id="works">
-            <div class="container">
-                <div class="section-header centered">
-                    <h2>How Navigui Works</h2>
-                    <p>Find your dream internship in three simple steps</p>
-                </div>
-                <div class="steps-container">
-                    <div class="step-item">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <div class="step-icon">
-                                <i class="fas fa-user-plus"></i>
+                <!-- How It Works -->
+                <section class="how-it-works" id="works">
+                    <div class="container">
+                        <div class="section-header centered">
+                            <h2>How Navigui Works</h2>
+                            <p>Find your dream internship in three simple steps</p>
+                        </div>
+                        <div class="steps-container">
+                            <div class="step-item">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <div class="step-icon">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <h3>Log in to your profile</h3>
+                                    <p>Sign in to your account and build your profile with your education, skills, and experience.</p>
+                                </div>
                             </div>
-                            <h3>Log in to your profile</h3>
-                            <p>Sign in to your account and build your profile with your education, skills, and experience.</p>
+                            <div class="step-item">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <div class="step-icon">
+                                        <i class="fas fa-search"></i>
+                                    </div>
+                                    <h3>Browse opportunities</h3>
+                                    <p>Search for internships that match your interests, location, and career goals.</p>
+                                </div>
+                            </div>
+                            <div class="step-item">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <div class="step-icon">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </div>
+                                    <h3>Apply with ease</h3>
+                                    <p>Apply directly through our platform and track your application status.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="step-item">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <div class="step-icon">
-                                <i class="fas fa-search"></i>
-                            </div>
-                            <h3>Browse opportunities</h3>
-                            <p>Search for internships that match your interests, location, and career goals.</p>
-                        </div>
-                    </div>
-                    <div class="step-item">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <div class="step-icon">
-                                <i class="fas fa-paper-plane"></i>
-                            </div>
-                            <h3>Apply with ease</h3>
-                            <p>Apply directly through our platform and track your application status.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+                </section>
 
-        <!-- Collaborative Workspace Section -->
-        <section class="workspace-section" id="workspace">
-            <div class="container">
-                <div class="section-header centered">
-                    <h2>Our Collaborative Network</h2>
-                    <p>Skilled pilots managing your accounts so you don't have to</p>
-                </div>
-                
-                <div class="collab-network-wrapper">
-                    <div class="hub-center">
-                        <div class="hub-app-icon">
-                            <img src="assets/logo_EXIA_RVB.png" alt="Navigui Hub">
-                            <div class="teacher-info">
-                                <p class="teacher-name">Prof. Maryam</p>
-                                <span class="teacher-title">Course Director</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="profile-connections">
-                        <div class="profile-card top-left">
-                            <div class="profile-picture">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="profile-info">
-                                <p class="profile-name">Selma Radi</p>
-                                <span class="profile-title">Wix Developer</span>
-                            </div>
+                <!-- Collaborative Workspace Section -->
+                <section class="workspace-section" id="workspace">
+                    <div class="container">
+                        <div class="section-header centered">
+                            <h2>Our Collaborative Network</h2>
+                            <p>Skilled pilots managing your accounts so you don't have to</p>
                         </div>
                         
-                        <div class="profile-card top-right">
-                            <div class="profile-picture">
-                                <i class="fas fa-user"></i>
+                        <div class="collab-network-wrapper">
+                            <div class="hub-center">
+                                <div class="hub-app-icon">
+                                    <img src="assets/logo_EXIA_RVB.png" alt="Navigui Hub">
+                                    <div class="teacher-info">
+                                        <p class="teacher-name">Prof. Maryam</p>
+                                        <span class="teacher-title">Course Director</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="profile-info">
-                                <p class="profile-name">Mohamed Rami</p>
-                                <span class="profile-title">UI/UX Designer</span>
+                            
+                            <div class="profile-connections">
+                                <div class="profile-card top-left">
+                                    <div class="profile-picture">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="profile-info">
+                                        <p class="profile-name">Selma Radi</p>
+                                        <span class="profile-title">Wix Developer</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="profile-card top-right">
+                                    <div class="profile-picture">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="profile-info">
+                                        <p class="profile-name">Mohamed Rami</p>
+                                        <span class="profile-title">UI/UX Designer</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="profile-card bottom-left">
+                                    <div class="profile-picture">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="profile-info">
+                                        <p class="profile-name">Wissem Recham</p>
+                                        <span class="profile-title">Developer</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="profile-card bottom-right">
+                                    <div class="profile-picture">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="profile-info">
+                                        <p class="profile-name">Sidali Hallaoua</p>
+                                        <span class="profile-title">Programmer</span>
+                                    </div>
+                                </div>
+
+                                <div class="connection-path top-left"></div>
+                                <div class="connection-path top-right"></div>
+                                <div class="connection-path bottom-left"></div>
+                                <div class="connection-path bottom-right"></div>
                             </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Testimonials -->
+                <section class="testimonials" id="testimonials">
+                    <div class="section-header centered">
+                        <h2>Success Stories</h2>
+                        <p>What our users are saying</p>
+                    </div>
+                    <div class="testimonial-container">
+                        <button class="testimonial-nav prev" id="prev-testimonial">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div class="testimonial-list" id="testimonial-list">
+                            <div class="testimonial">
+                                <div class="testimonial-content">
+                                    <p>"Navigui helped me land my dream internship at Google. The platform was easy to use and I received my offer within 2 weeks of applying!"</p>
+                                </div>
+                                <div class="testimonial-author">
+                                    <div class="author-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="author-info">
+                                        <h4>Sarah Johnson</h4>
+                                        <span>Computer Science Student</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="testimonial">
+                                <div class="testimonial-content">
+                                    <p>"As a business major, I was looking for marketing internships. Navigui connected me with multiple companies and I had several offers to choose from."</p>
+                                </div>
+                                <div class="testimonial-author">
+                                    <div class="author-avatar">
+                                        <i class="fas fa-user-circle"></i>
+                                    </div>
+                                    <div class="author-info">
+                                        <h4>James Rodriguez</h4>
+                                        <span>Business Administration Student</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="testimonial">
+                                <div class="testimonial-content">
+                                    <p>"A fantastic experience, I highly recommend! The platform is modern and the application tracking features are very practical for keeping organized."</p>
+                                </div>
+                                <div class="testimonial-author">
+                                    <div class="author-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="author-info">
+                                        <h4>Emily Chen</h4>
+                                        <span>Design Student</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="testimonial-nav next" id="next-testimonial">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="testimonial-dots" id="testimonial-dots">
+                        <span class="dot active"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                </section>
+
+                <!-- FAQ Section -->
+                <section class="faq-section" id="faq">
+                    <div class="container">
+                        <div class="section-header centered">
+                            <h2 class="faq-title">Frequently Asked Questions</h2>
+                            <p class="faq-subtitle">Everything you need to know about finding and applying for internships</p>
                         </div>
                         
-                        <div class="profile-card bottom-left">
-                            <div class="profile-picture">
-                                <i class="fas fa-user"></i>
+                        <div class="faq-container">
+                            <div class="faq-item active">
+                                <div class="faq-question">
+                                    <h3>How do I find the right internship for my career goals?</h3>
+                                    <div class="faq-icon">
+                                        <i class="fas fa-minus"></i>
+                                    </div>
+                                </div>
+                                <div class="faq-answer">
+                                    <p>Use our advanced search filters to narrow down opportunities by industry, location, and duration. We recommend focusing on internships that align with your major and desired career path. Our skill-matching algorithm can also suggest internships based on your profile and experience.</p>
+                                </div>
                             </div>
-                            <div class="profile-info">
-                                <p class="profile-name">Wissem Recham</p>
-                                <span class="profile-title">Developer</span>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <h3>Are the internships on Navigui paid or unpaid?</h3>
+                                    <div class="faq-icon">
+                                        <i class="fas fa-plus"></i>
+                                    </div>
+                                </div>
+                                <div class="faq-answer">
+                                    <p>We list both paid and unpaid internships, but each listing clearly indicates compensation details. You can filter your search to show only paid opportunities. We advocate for fair compensation and encourage companies to offer paid positions that value your skills and time.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <h3>How can I make my application stand out to employers?</h3>
+                                    <div class="faq-icon">
+                                        <i class="fas fa-plus"></i>
+                                    </div>
+                                </div>
+                                <div class="faq-answer">
+                                    <p>Complete your profile with relevant skills and coursework, upload a tailored resume for each application, and write thoughtful answers to application questions. Our Resume Builder tool can help optimize your resume with industry keywords, and our Application Coach provides personalized feedback to improve your chances.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <h3>Can I apply for remote internships in other countries?</h3>
+                                    <div class="faq-icon">
+                                        <i class="fas fa-plus"></i>
+                                    </div>
+                                </div>
+                                <div class="faq-answer">
+                                    <p>Yes! Many companies on our platform offer remote internships that you can pursue from anywhere. Keep in mind potential time zone differences and work permit requirements for international opportunities. Use our location filter to find remote positions or browse international opportunities that match your skills.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item">
+                                <div class="faq-question">
+                                    <h3>How long does the application process typically take?</h3>
+                                    <div class="faq-icon">
+                                        <i class="fas fa-plus"></i>
+                                    </div>
+                                </div>
+                                <div class="faq-answer">
+                                    <p>The timeline varies by company, but most employers respond within 2-3 weeks of application. Our Application Tracking feature shows real-time status updates and notifies you of any changes. Some companies conduct multiple interview rounds, which can extend the process to 4-6 weeks from initial application to offer.</p>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="profile-card bottom-right">
-                            <div class="profile-picture">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="profile-info">
-                                <p class="profile-name">Sidali Hallaoua</p>
-                                <span class="profile-title">Programmer</span>
-                            </div>
-                        </div>
+                    </div>
+                </section>
+            </main>
 
-                        <div class="connection-path top-left"></div>
-                        <div class="connection-path top-right"></div>
-                        <div class="connection-path bottom-left"></div>
-                        <div class="connection-path bottom-right"></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Testimonials -->
-        <section class="testimonials" id="testimonials">
-            <div class="section-header centered">
-                <h2>Success Stories</h2>
-                <p>What our users are saying</p>
-            </div>
-            <div class="testimonial-container">
-                <button class="testimonial-nav prev" id="prev-testimonial">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <div class="testimonial-list" id="testimonial-list">
-                    <div class="testimonial">
-                        <div class="testimonial-content">
-                            <p>"Navigui helped me land my dream internship at Google. The platform was easy to use and I received my offer within 2 weeks of applying!"</p>
-                        </div>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="author-info">
-                                <h4>Sarah Johnson</h4>
-                                <span>Computer Science Student</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="testimonial">
-                        <div class="testimonial-content">
-                            <p>"As a business major, I was looking for marketing internships. Navigui connected me with multiple companies and I had several offers to choose from."</p>
-                        </div>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">
-                                <i class="fas fa-user-circle"></i>
-                            </div>
-                            <div class="author-info">
-                                <h4>James Rodriguez</h4>
-                                <span>Business Administration Student</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="testimonial">
-                        <div class="testimonial-content">
-                            <p>"A fantastic experience, I highly recommend! The platform is modern and the application tracking features are very practical for keeping organized."</p>
-                        </div>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="author-info">
-                                <h4>Emily Chen</h4>
-                                <span>Design Student</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button class="testimonial-nav next" id="next-testimonial">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
-            <div class="testimonial-dots" id="testimonial-dots">
-                <span class="dot active"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-            </div>
-        </section>
-
-        <!-- FAQ Section -->
-        <section class="faq-section" id="faq">
-            <div class="container">
-                <div class="section-header centered">
-                    <h2 class="faq-title">Frequently Asked Questions</h2>
-                    <p class="faq-subtitle">Everything you need to know about finding and applying for internships</p>
-                </div>
-                
-                <div class="faq-container">
-                    <div class="faq-item active">
-                        <div class="faq-question">
-                            <h3>How do I find the right internship for my career goals?</h3>
-                            <div class="faq-icon">
-                                <i class="fas fa-minus"></i>
-                            </div>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Use our advanced search filters to narrow down opportunities by industry, location, and duration. We recommend focusing on internships that align with your major and desired career path. Our skill-matching algorithm can also suggest internships based on your profile and experience.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h3>Are the internships on Navigui paid or unpaid?</h3>
-                            <div class="faq-icon">
-                                <i class="fas fa-plus"></i>
-                            </div>
-                        </div>
-                        <div class="faq-answer">
-                            <p>We list both paid and unpaid internships, but each listing clearly indicates compensation details. You can filter your search to show only paid opportunities. We advocate for fair compensation and encourage companies to offer paid positions that value your skills and time.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h3>How can I make my application stand out to employers?</h3>
-                            <div class="faq-icon">
-                                <i class="fas fa-plus"></i>
-                            </div>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Complete your profile with relevant skills and coursework, upload a tailored resume for each application, and write thoughtful answers to application questions. Our Resume Builder tool can help optimize your resume with industry keywords, and our Application Coach provides personalized feedback to improve your chances.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h3>Can I apply for remote internships in other countries?</h3>
-                            <div class="faq-icon">
-                                <i class="fas fa-plus"></i>
-                            </div>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Yes! Many companies on our platform offer remote internships that you can pursue from anywhere. Keep in mind potential time zone differences and work permit requirements for international opportunities. Use our location filter to find remote positions or browse international opportunities that match your skills.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h3>How long does the application process typically take?</h3>
-                            <div class="faq-icon">
-                                <i class="fas fa-plus"></i>
-                            </div>
-                        </div>
-                        <div class="faq-answer">
-                            <p>The timeline varies by company, but most employers respond within 2-3 weeks of application. Our Application Tracking feature shows real-time status updates and notifies you of any changes. Some companies conduct multiple interview rounds, which can extend the process to 4-6 weeks from initial application to offer.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="footer">
+            <footer class="footer">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-column">
@@ -418,19 +418,20 @@
                 <div class="footer-column">
                     <h3>For Students</h3>
                     <ul>
-                        <li><a href="#">Browse Internships</a></li>
-                        <li><a href="#">Career Resources</a></li>
-                        <li><a href="#">Resume Builder</a></li>
-                        <li><a href="#">Success Stories</a></li>
+                        <li><a href="/../src/View/login.php">Browse Internships</a></li>
+                        <li><a href="/../src/View/login.php">Career Resources</a></li>
+
+                        <li><a href="/../src/View/login.php">Resume Builder</a></li>
+                        <li><a href="/../src/View/login.php">Success Stories</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
                     <h3>For Employers</h3>
                     <ul>
-                        <li><a href="#">Post an Internship</a></li>
-                        <li><a href="#">Browse Candidates</a></li>
-                        <li><a href="#">Employer Resources</a></li>
-                        <li><a href="#">Success Stories</a></li>
+                        <li><a href="/../src/View/login.php">Post an Internship</a></li>
+                        <li><a href="/../src/View/login.php">Browse Candidates</a></li>
+                        <li><a href="/../src/View/login.php">Employer Resources</a></li>
+                        <li><a href="/../src/View/login.php">Success Stories</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
@@ -445,9 +446,9 @@
             <div class="footer-bottom">
                 <p>&copy; 2025 Navigui. All rights reserved.</p>
                 <div class="footer-links">
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
-                    <a href="#">Cookies</a>
+                    <a href="legal-mentions.html">Privacy Policy</a>
+                    <a href="legal-mentions.html">Terms of Service</a>
+                    <a href="cookie-policy.html">Cookies</a>
                 </div>
             </div>
         </div>
