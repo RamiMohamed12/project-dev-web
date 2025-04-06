@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.0/phpunit.xsd"
+         bootstrap="vendor/autoload.php"           colors="true"                            cacheDirectory=".phpunit.cache"  
+         stopOnFailure="false">           <!-- Set to true if you want tests to stop on the first failure -->
+
+    <testsuites>
+        <!-- Define your test suites here -->
+        <testsuite name="Unit">
+             <!-- Tell PHPUnit where to find tests for the 'Unit' suite -->
+            <directory suffix="Test.php">./tests/Unit</directory>
+        </testsuite>
+
+        <!-- Example of how you might add other suites later (e.g., Feature tests) -->
+        <!--
+        <testsuite name="Feature">
+            <directory suffix="Test.php">./tests/Feature</directory>
+        </testsuite>
+        -->
+    </testsuites>
+
+    <coverage> <!-- Configure code coverage analysis (requires Xdebug or PCOV) -->
+        <include>
+             <!-- Specify which directories contain the source code to measure coverage for -->
+            <directory suffix=".php">./src</directory>
+        </include>
+        <exclude>
+            <!-- Optionally exclude specific files or directories from coverage -->
+            <!-- Example:
+            <directory suffix=".php">./src/SomeVendorOrGeneratedCode</directory>
+            <file>./src/bootstrap.php</file>
+             -->
+             <!-- If your User.php didn't have a namespace initially, exclude it until fixed -->
+             <!-- <file>./src/Model/user.php</file> -->
+        </exclude>
+        <!-- You can also configure coverage report formats here -->
+        <!-- Example for HTML report:
+        <report>
+            <html outputDirectory="build/coverage-report" lowUpperBound="50" highLowerBound="90"/>
+        </report>
+        -->
+    </coverage>
+
+    <php>
+        <!-- Define PHP constants, environment variables, or ini settings for your tests -->
+        <!-- Examples: -->
+        <!-- <env name="APP_ENV" value="testing"/> -->
+        <!-- <env name="DB_CONNECTION" value="sqlite"/> -->
+        <!-- <env name="DB_DATABASE" value=":memory:"/> -->
+        <!-- <ini name="memory_limit" value="256M"/> -->
+        <!-- <ini name="display_errors" value="true"/> -->
+    </php>
+
+</phpunit>
+
+
+
+
+

@@ -1,0 +1,1 @@
+{"version":1,"defects":{"Tests\\Unit\\Model\\UserTest::testConstructorThrowsExceptionIfPdoIsNull":8,"Tests\\Unit\\Model\\UserTest::testSanitizeRemovesTagsAndEncodes":8,"Tests\\Unit\\Model\\UserTest::testSanitizeHandlesNull":8},"times":[]}
