@@ -1106,7 +1106,14 @@ function time_elapsed_string($datetime, $full = false) {
                         <span>Manage Offers</span>
                     </a>
                 </li>
-                <?php if ($loggedInUserId): ?>
+                <li class="nav-item"> 
+    <a href="../Controller/applicationController.php?action=manage" class="nav-link">
+        <i class="fas fa-users"></i> <!-- Different icon if you want -->
+        <span>Manage Applications</span>
+    </a>
+</li>
+    
+ <?php if ($loggedInUserId): ?>
                 <li class="nav-item">
                     <!-- Ensure the link points correctly to the edit user page for admins -->
                     <a href="../Controller/editUser.php?id=<?= $loggedInUserId ?>&type=admin" class="nav-link">
@@ -1115,8 +1122,7 @@ function time_elapsed_string($datetime, $full = false) {
                     </a>
                 </li>
                 <?php endif; ?>
-                
-            </ul>
+                           </ul>
 
             <div class="sidebar-footer">
                 <a href="../Controller/logoutController.php" class="logout-btn">
@@ -1213,6 +1219,10 @@ function time_elapsed_string($datetime, $full = false) {
                             <i class="fas fa-file-alt"></i>
                             <span>Manage Offers</span>
                         </a>
+ <a href="../Controller/applicationController.php?action=manage" class="action-btn">
+    <i class="fas fa-users"></i> <!-- You can pick any icon -->
+    <span>Manage Applications</span>
+</a> 
                         <?php if ($loggedInUserId): ?>
                          <!-- Ensure the link points correctly to the edit user page for admins -->
                         <a href="../Controller/editUser.php?id=<?= $loggedInUserId ?>&type=admin" class="action-btn">

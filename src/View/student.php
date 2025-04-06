@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../config/config.php'; // Need $conn
 require_once __DIR__ . '/../Auth/AuthCheck.php';
 require_once __DIR__ . '/../Auth/AuthSession.php';
 require_once __DIR__ . '/../Model/user.php';      // To fetch user details
-require_once __DIR__ . '/../Model/Application.php'; // To fetch application statistics
+require_once __DIR__ . '/../Model/Application.php'; // To fetch application statistics (NOW USED)
 
 if (session_status() == PHP_SESSION_NONE) { session_start(); }
 
@@ -27,14 +27,22 @@ $dbUserEmail = null;
 $dbUserSchool = null; // Variable for school
 $defaultPic = '../View/images/default_avatar.png'; // ** ADJUST PATH AS NEEDED **
 
-// --- Application Statistics ---
+// --- Application Statistics (Initialize) --- // MODIFIED: Initialize vars
 $totalApplications = 0;
 $acceptedApplications = 0;
 $pendingApplications = 0;
 $rejectedApplications = 0;
-$recentApplications = [];
+$recentApplications = []; // Initialize as empty array
 
+// --- Instantiate Models --- // NEW: Instantiate Application model here
+$applicationModel = null;
+if (isset($conn)) {
+    $applicationModel = new Application($conn);
+}
+
+// --- Fetch User Details and Application Stats --- // MODIFIED Block
 if ($loggedInUserId && isset($conn)) {
+    // Fetch User Details
     try {
         $userModel = new User($conn);
         $userDetails = $userModel->readStudent($loggedInUserId); // Fetch this student's details
@@ -52,8 +60,46 @@ if ($loggedInUserId && isset($conn)) {
         }
     } catch (Exception $e) {
         error_log("Error fetching student details for dashboard (ID: $loggedInUserId): " . $e->getMessage());
+        // Optionally set an error message for the user here
     }
+
+    // Fetch Application Statistics & Recent Apps (if Application model is available)
+    if ($applicationModel) { // Check if model was instantiated
+        try {
+            // Fetch Stats
+            $appStats = $applicationModel->getApplicationStatisticsByStudent($loggedInUserId);
+            if ($appStats) { // Check if fetch was successful
+                $totalApplications = $appStats['total'];
+                $acceptedApplications = $appStats['accepted'];
+                $pendingApplications = $appStats['pending'];
+                $rejectedApplications = $appStats['rejected'];
+            } else {
+                 error_log("Failed to get application stats for student ID: $loggedInUserId");
+                 // Optionally set an error message for the user here
+            }
+
+            // Fetch Recent Apps (e.g., top 3)
+            $fetchedRecentApps = $applicationModel->getRecentApplicationsByStudent($loggedInUserId, 3);
+            if ($fetchedRecentApps !== false) { // Check if fetch was successful
+                 $recentApplications = $fetchedRecentApps;
+            } else {
+                 error_log("Failed to get recent applications for student ID: $loggedInUserId");
+                 // Optionally set an error message for the user here
+            }
+
+        } catch (Exception $e) {
+            error_log("Error fetching application data for dashboard (ID: $loggedInUserId): " . $e->getMessage());
+            // Optionally set an error message for the user here
+        }
+    } else {
+         error_log("Application model could not be instantiated in student.php");
+         // Optionally set an error message for the user here
+    }
+
 }
+// --- End Fetch User Details and Application Stats ---
+
+// Determine Display Name/Email/School
 $displayName = htmlspecialchars($dbUserName ?? $sessionUserName ?? 'Student');
 $displayEmail = htmlspecialchars($dbUserEmail ?? $sessionUserEmail ?? 'N/A');
 $displaySchool = htmlspecialchars($dbUserSchool ?? 'N/A'); // Display school
@@ -88,13 +134,13 @@ if (isset($_GET['error'])) {
         50% { transform: translateY(-10px); }
         100% { transform: translateY(0px); }
     }
-    
+
     @keyframes pulse {
         0% { transform: scale(1); }
         50% { transform: scale(1.05); }
         100% { transform: scale(1); }
     }
-    
+
     @keyframes fadeInUp {
         from {
             opacity: 0;
@@ -105,20 +151,20 @@ if (isset($_GET['error'])) {
             transform: translateY(0);
         }
     }
-    
+
     .stats-section {
         padding: 3rem 0;
         animation: fadeInUp 0.8s ease-out;
         position: relative;
     }
-    
+
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
-    
+
     .stat-card {
         background: var(--bg-secondary);
         border-radius: var(--border-radius);
@@ -130,18 +176,18 @@ if (isset($_GET['error'])) {
         position: relative;
         overflow: hidden;
     }
-    
+
     .stat-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
-    
+
     .stat-icon {
         font-size: 2rem;
         margin-bottom: 1rem;
         display: inline-block;
     }
-    
+
     .stat-value {
         font-size: 2.5rem;
         font-weight: 700;
@@ -150,21 +196,21 @@ if (isset($_GET['error'])) {
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
-    
+
     .stat-label {
         color: var(--text-secondary);
         font-size: 0.95rem;
     }
-    
+
     .total-applications .stat-icon { color: #6366f1; animation: pulse 2s infinite; }
     .accepted-applications .stat-icon { color: #10b981; animation: pulse 2s infinite 0.3s; }
     .pending-applications .stat-icon { color: #f59e0b; animation: pulse 2s infinite 0.6s; }
     .rejected-applications .stat-icon { color: #ef4444; animation: pulse 2s infinite 0.9s; }
-    
+
     .recent-applications {
         margin-top: 2rem;
     }
-    
+
     .recent-app-card {
         background: var(--bg-secondary);
         border-radius: var(--border-radius);
@@ -178,61 +224,63 @@ if (isset($_GET['error'])) {
         transition: all 0.3s ease;
         animation: fadeInUp 0.5s ease-out;
     }
-    
+
     .recent-app-card:hover {
         transform: translateX(5px);
         border-color: #6366f1;
     }
-    
+
     .recent-app-logo {
         width: 50px;
         height: 50px;
         border-radius: 50%;
         object-fit: cover;
+        background-color: var(--bg-tertiary); /* Placeholder bg */
     }
-    
+
     .recent-app-info {
         flex: 1;
     }
-    
+
     .recent-app-title {
         font-weight: 600;
         margin-bottom: 0.25rem;
     }
-    
+
     .recent-app-company {
         color: var(--text-secondary);
         font-size: 0.875rem;
         margin-bottom: 0.25rem;
     }
-    
+
     .recent-app-date {
         font-size: 0.75rem;
         color: var(--text-secondary);
     }
-    
+
     .recent-app-status {
         padding: 0.35rem 0.75rem;
         border-radius: 20px;
         font-size: 0.75rem;
         font-weight: 600;
+        white-space: nowrap; /* Prevent wrapping */
     }
-    
+
     .status-pending {
         background: rgba(245, 158, 11, 0.1);
         color: #f59e0b;
     }
-    
+
     .status-accepted {
         background: rgba(16, 185, 129, 0.1);
         color: #10b981;
     }
-    
+
     .status-rejected {
         background: rgba(239, 68, 68, 0.1);
         color: #ef4444;
     }
-    
+
     .view-all-btn {
         display: inline-block;
         padding: 0.75rem 1.5rem;
@@ -242,38 +290,44 @@ if (isset($_GET['error'])) {
         font-weight: 500;
         margin-top: 1rem;
         transition: all 0.3s ease;
+        text-decoration: none; /* Ensure it looks like a button */
     }
-    
+
     .view-all-btn:hover {
         transform: translateY(-3px);
         box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
     }
-    
+
     .floating-accent {
         animation: float 6s ease-in-out infinite;
     }
-    
+
     .action-card {
         animation: fadeInUp 0.5s ease-out;
     }
-    
+
     .action-card:nth-child(1) { animation-delay: 0.1s; }
     .action-card:nth-child(2) { animation-delay: 0.2s; }
     .action-card:nth-child(3) { animation-delay: 0.3s; }
     .action-card:nth-child(4) { animation-delay: 0.4s; }
-    
+
     .empty-state {
         text-align: center;
         padding: 2rem;
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius);
+        border: 1px dashed var(--card-border);
+        margin-top: 1rem;
         color: var(--text-secondary);
     }
-    
+
     .empty-state i {
         font-size: 3rem;
         margin-bottom: 1rem;
         color: var(--text-secondary);
         opacity: 0.5;
     }
+    /* Add any other specific styles from the original file if needed */
 </style>
 </head>
 <body>
@@ -281,7 +335,7 @@ if (isset($_GET['error'])) {
     <div class="floating-accent accent-1"></div>
     <div class="floating-accent accent-2"></div>
     <div class="floating-accent accent-3"></div>
-    
+
     <header class="header">
         <nav class="navbar">
             <div class="nav-container bento-card">
@@ -310,7 +364,7 @@ if (isset($_GET['error'])) {
                         <input type="checkbox" id="themeToggle">
                         <span class="slider"></span>
                     </label>
-                    
+
                     <div class="user-dropdown">
                         <img src="<?= $profilePicSrc ?? $defaultPic ?>" alt="Profile" class="user-avatar">
                         <div class="dropdown-menu">
@@ -407,36 +461,41 @@ if (isset($_GET['error'])) {
                     <h2>Your Application Statistics</h2>
                     <p>Track your progress and application status at a glance</p>
                 </div>
-                
+
                 <div class="stats-grid">
                     <div class="stat-card total-applications">
                         <i class="fas fa-file-alt stat-icon"></i>
+                        <!-- MODIFIED: Use PHP variable -->
                         <div class="stat-value"><?= $totalApplications ?></div>
                         <div class="stat-label">Total Applications</div>
                     </div>
-                    
+
                     <div class="stat-card accepted-applications">
                         <i class="fas fa-check-circle stat-icon"></i>
+                        <!-- MODIFIED: Use PHP variable -->
                         <div class="stat-value"><?= $acceptedApplications ?></div>
                         <div class="stat-label">Accepted</div>
                     </div>
-                    
+
                     <div class="stat-card pending-applications">
                         <i class="fas fa-clock stat-icon"></i>
+                        <!-- MODIFIED: Use PHP variable -->
                         <div class="stat-value"><?= $pendingApplications ?></div>
                         <div class="stat-label">Pending</div>
                     </div>
-                    
+
                     <div class="stat-card rejected-applications">
                         <i class="fas fa-times-circle stat-icon"></i>
+                         <!-- MODIFIED: Use PHP variable -->
                         <div class="stat-value"><?= $rejectedApplications ?></div>
                         <div class="stat-label">Rejected</div>
                     </div>
                 </div>
-                
+
+                <!-- === MODIFIED: Recent Applications Section === -->
                 <div class="recent-applications">
                     <h3>Recent Applications</h3>
-                    
+
                     <?php if (empty($recentApplications)): ?>
                         <div class="empty-state">
                             <i class="fas fa-folder-open"></i>
@@ -446,26 +505,32 @@ if (isset($_GET['error'])) {
                     <?php else: ?>
                         <?php foreach ($recentApplications as $app): ?>
                             <div class="recent-app-card">
-                                <?php 
-                                $companyLogoSrc = '../View/images/default_company.png';
-                                if (!empty($app['company_picture']) && !empty($app['company_picture_mime'])) {
+                                <?php
+                                // Default company logo path (Adjust as needed)
+                                $defaultCompanyLogo = '../View/images/default_company.png';
+                                $companyLogoSrc = $defaultCompanyLogo; // Start with default
+
+                                // Check if company picture data exists and process it
+                                if (!empty($app['company_picture_mime']) && !empty($app['company_picture'])) {
+                                    // Handle potential resource stream from database
                                     $logoData = is_resource($app['company_picture']) ? stream_get_contents($app['company_picture']) : $app['company_picture'];
-                                    if ($logoData) {
+                                    if ($logoData) { // Ensure data was read successfully
                                         $companyLogoSrc = 'data:' . htmlspecialchars($app['company_picture_mime']) . ';base64,' . base64_encode($logoData);
                                     }
                                 }
                                 ?>
-                                <img src="<?= $companyLogoSrc ?>" alt="Company" class="recent-app-logo">
+                                <img src="<?= $companyLogoSrc ?>" alt="<?= htmlspecialchars($app['name_company'] ?? 'Company') ?> Logo" class="recent-app-logo">
                                 <div class="recent-app-info">
-                                    <div class="recent-app-title"><?= htmlspecialchars($app['title'] ?? 'Internship') ?></div>
-                                    <div class="recent-app-company"><?= htmlspecialchars($app['name_company'] ?? 'Company') ?></div>
-                                    <div class="recent-app-date">Applied on: <?= date('M d, Y', strtotime($app['created_at'] ?? date('Y-m-d'))) ?></div>
+                                    <div class="recent-app-title"><?= htmlspecialchars($app['title'] ?? 'Internship Opportunity') ?></div>
+                                    <div class="recent-app-company"><?= htmlspecialchars($app['name_company'] ?? 'A Company') ?></div>
+                                    <div class="recent-app-date">Applied on: <?= isset($app['created_at']) ? date('M d, Y', strtotime($app['created_at'])) : 'N/A' ?></div>
                                 </div>
-                                <?php 
-                                $status = $app['status'] ?? 'pending';
-                                $statusClass = 'status-pending';
+                                <?php
+                                // Determine status class and text
+                                $status = strtolower($app['status'] ?? 'pending'); // Ensure lowercase for comparison
+                                $statusClass = 'status-pending'; // Default
                                 $statusText = 'Pending';
-                                
+
                                 if ($status === 'accepted') {
                                     $statusClass = 'status-accepted';
                                     $statusText = 'Accepted';
@@ -477,7 +542,7 @@ if (isset($_GET['error'])) {
                                 <span class="recent-app-status <?= $statusClass ?>"><?= $statusText ?></span>
                             </div>
                         <?php endforeach; ?>
-                        
+
                         <div style="text-align: center;">
                             <a href="../Controller/applicationController.php?action=myapps" class="view-all-btn">
                                 <i class="fas fa-list"></i> View All Applications
@@ -485,6 +550,7 @@ if (isset($_GET['error'])) {
                         </div>
                     <?php endif; ?>
                 </div>
+                 <!-- === END MODIFIED: Recent Applications Section === -->
             </div>
         </section>
 
@@ -495,7 +561,7 @@ if (isset($_GET['error'])) {
                     <h2>Explore Your Options</h2>
                     <p>Find and track internship opportunities with top companies</p>
                 </div>
-                
+
                 <div class="actions-grid">
                     <div class="action-card">
                         <div class="action-icon">
@@ -505,7 +571,7 @@ if (isset($_GET['error'])) {
                         <p class="action-text">Browse through hundreds of internship opportunities from leading companies in various industries.</p>
                         <a href="../Controller/offerController.php?action=view" class="action-button">Explore Offers</a>
                     </div>
-                    
+
                     <div class="action-card">
                         <div class="action-icon">
                             <i class="fas fa-heart"></i>
@@ -514,7 +580,7 @@ if (isset($_GET['error'])) {
                         <p class="action-text">Access internships you've saved to review later and keep track of your favorite opportunities.</p>
                         <a href="../Controller/wishlistController.php?action=view" class="action-button">View Wishlist</a>
                     </div>
-                    
+
                     <div class="action-card">
                         <div class="action-icon">
                             <i class="fas fa-file-alt"></i>
@@ -523,7 +589,7 @@ if (isset($_GET['error'])) {
                         <p class="action-text">Monitor the status of your applications, prepare for interviews, and track your progress.</p>
                         <a href="../Controller/applicationController.php?action=myapps" class="action-button">Check Applications</a>
                     </div>
-                    
+
                     <div class="action-card">
                         <div class="action-icon">
                             <i class="fas fa-user-edit"></i>
@@ -544,7 +610,7 @@ if (isset($_GET['error'])) {
                     <h2>Your Profile Information</h2>
                     <p>Keep your details updated to increase your chances of being noticed</p>
                 </div>
-                
+
                 <div class="user-info-card">
                     <div class="info-grid">
                         <div class="info-item">
@@ -554,7 +620,7 @@ if (isset($_GET['error'])) {
                             </span>
                             <span class="info-value"><?= $displayName ?></span>
                         </div>
-                        
+
                         <div class="info-item">
                             <span class="info-label">
                                 <i class="fas fa-envelope"></i>
@@ -562,7 +628,7 @@ if (isset($_GET['error'])) {
                             </span>
                             <span class="info-value"><?= $displayEmail ?></span>
                         </div>
-                        
+
                         <div class="info-item">
                             <span class="info-label">
                                 <i class="fas fa-university"></i>
@@ -570,7 +636,7 @@ if (isset($_GET['error'])) {
                             </span>
                             <span class="info-value"><?= $displaySchool ?></span>
                         </div>
-                        
+
                         <div class="info-item">
                             <span class="info-label">
                                 <i class="fas fa-user-graduate"></i>
@@ -578,7 +644,7 @@ if (isset($_GET['error'])) {
                             </span>
                             <span class="info-value">Student</span>
                         </div>
-                        
+
                         <div class="info-item">
                             <span class="info-label">
                                 <i class="fas fa-clock"></i>
@@ -586,7 +652,7 @@ if (isset($_GET['error'])) {
                             </span>
                             <span class="info-value"><?= date('Y-m-d H:i:s', AuthSession::getUserData('logged_in_time') ?? time()) ?></span>
                         </div>
-                        
+
                         <?php if(!empty($userDetails['year'])): ?>
                         <div class="info-item">
                             <span class="info-label">
@@ -623,7 +689,7 @@ if (isset($_GET['error'])) {
                 <div class="footer-column">
                     <h3>For Students</h3>
                     <ul>
-                        <li><a href="#">Browse Internships</a></li>
+                        <li><a href="../Controller/offerController.php?action=view">Browse Internships</a></li>
                         <li><a href="#">Career Resources</a></li>
                         <li><a href="#">Resume Builder</a></li>
                         <li><a href="#">Success Stories</a></li>
@@ -648,7 +714,7 @@ if (isset($_GET['error'])) {
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; <?= date('Y'); ?> Navigui - Student Internship Platform</p>
+                <p>© <?= date('Y'); ?> Navigui - Student Internship Platform</p>
                 <div class="footer-links">
                     <a href="#">Privacy Policy</a>
                     <a href="#">Terms of Service</a>
@@ -662,82 +728,86 @@ if (isset($_GET['error'])) {
         document.addEventListener('DOMContentLoaded', function() {
             // Theme Toggle
             const themeToggle = document.getElementById('themeToggle');
-            
-            // Check for saved theme preference or use default
             const currentTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', currentTheme);
-            
-            // Set toggle checked state based on current theme
-            if (currentTheme === 'dark') {
-                themeToggle.checked = true;
-            }
-            
+            if (currentTheme === 'dark') { themeToggle.checked = true; }
             themeToggle.addEventListener('change', function() {
                 const newTheme = this.checked ? 'dark' : 'light';
                 document.documentElement.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
             });
-            
+
             // Mobile Menu Toggle
             const mobileToggle = document.getElementById('mobile-toggle');
             const mobileMenu = document.getElementById('mobile-menu');
-            
-            mobileToggle.addEventListener('click', function() {
-                mobileMenu.classList.toggle('active');
-                mobileToggle.classList.toggle('active');
-            });
-            
+            if(mobileToggle && mobileMenu) { // Check elements exist
+                mobileToggle.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('active');
+                    mobileToggle.classList.toggle('active');
+                });
+            }
+
             // Auto hide success messages after 5 seconds
             const successMessages = document.querySelectorAll('.success-message');
             if (successMessages.length > 0) {
                 setTimeout(function() {
                     successMessages.forEach(message => {
+                        message.style.transition = 'opacity 0.3s ease'; // Add transition
                         message.style.opacity = '0';
                         setTimeout(() => {
                             message.style.display = 'none';
-                        }, 300);
+                        }, 300); // Wait for transition to finish
                     });
                 }, 5000);
             }
-            
-            // Add scroll reveal animation
-            const animateOnScroll = function() {
-                const elements = document.querySelectorAll('.stat-card, .action-card, .recent-app-card, .user-info-card');
-                
-                elements.forEach(element => {
+
+            // --- Scroll Reveal Animation --- // MODIFIED: Improved logic
+            const elementsToAnimate = document.querySelectorAll('.stat-card, .action-card, .recent-app-card, .user-info-card');
+
+            // Set initial state for animations
+             elementsToAnimate.forEach(element => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(20px)';
+                element.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            });
+
+            const animateOnScroll = () => {
+                const screenPosition = window.innerHeight * 0.85; // Trigger animation sooner
+
+                elementsToAnimate.forEach(element => {
                     const elementPosition = element.getBoundingClientRect().top;
-                    const screenPosition = window.innerHeight / 1.2;
-                    
-                    if (elementPosition < screenPosition) {
+
+                    // Check if element is already visible (to avoid re-animating)
+                    if (element.style.opacity === '0' && elementPosition < screenPosition) {
                         element.style.opacity = '1';
                         element.style.transform = 'translateY(0)';
                     }
                 });
             };
-            
-            // Set initial state for scroll animations
-            document.querySelectorAll('.stat-card, .action-card, .recent-app-card, .user-info-card').forEach(element => {
-                element.style.opacity = '0';
-                element.style.transform = 'translateY(20px)';
-                element.style.transition = 'all 0.5s ease-out';
-            });
-            
+
             // Run on load and scroll
             window.addEventListener('scroll', animateOnScroll);
-            window.addEventListener('load', animateOnScroll);
-            
-            // Add hover effects for cards
+            // Run once on load after a short delay to ensure elements are ready
+            setTimeout(animateOnScroll, 100);
+
+            // --- Card Hover Effects --- // KEPT Original hover logic (optional)
             const cards = document.querySelectorAll('.action-card, .stat-card, .recent-app-card');
             cards.forEach(card => {
-                card.addEventListener('mouseenter', function() {
+                 // Removed JS hover in favor of CSS :hover for potentially smoother performance
+                 // If you prefer the JS method, uncomment the lines below
+
+                 /* card.addEventListener('mouseenter', function() {
                     this.style.transform = this.classList.contains('recent-app-card') ? 'translateX(5px)' : 'translateY(-5px)';
                     this.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)';
+                    this.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease'; // Add transition here
                 });
-                
+
                 card.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                    this.style.boxShadow = '';
-                });
+                    // Revert back to the transform potentially set by scroll animation
+                    const initialTransform = card.style.opacity === '1' ? 'translateY(0)' : 'translateY(20px)';
+                    this.style.transform = initialTransform;
+                    this.style.boxShadow = ''; // Revert to CSS default shadow
+                }); */
             });
         });
     </script>

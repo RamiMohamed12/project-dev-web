@@ -912,7 +912,11 @@ $currentPage = 'Dashboard';
                         <span>Manage Offers</span>
                     </a>
                 </li>
-                
+                               <a href="../Controller/applicationController.php?action=manage" class="nav-link">
+        <i class="fas fa-users"></i> <!-- Different icon if you want -->
+        <span>Manage Applications</span>
+    </a>
+</li>
                 <?php if ($loggedInUserId): ?>
                 <li class="nav-item">
                     <a href="../Controller/editUser.php?id=<?= $loggedInUserId ?>&type=pilote" class="nav-link">
@@ -1015,7 +1019,13 @@ $currentPage = 'Dashboard';
                                     <i class="fas fa-file-lines"></i>
                                     <span>Manage Offers</span>
                                 </a>
-                                <?php if ($loggedInUserId): ?>
+       <a href="../Controller/applicationController.php?action=manage" class="action-btn">
+    <i class="fas fa-users"></i> <!-- You can pick any icon -->
+    <span>Manage Applications</span>
+</a> 
+</li>
+                                
+    <?php if ($loggedInUserId): ?>
                                 <a href="../Controller/editUser.php?id=<?= $loggedInUserId ?>&type=pilote" class="action-btn">
                                     <i class="fas fa-user-pen"></i>
                                     <span>Edit Profile</span>

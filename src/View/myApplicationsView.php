@@ -1,64 +1,34 @@
 <?php
 // Location: src/View/myApplicationsView.php
-// Included by applicationController.php (action=myapps for Students)
 
-// Prevent direct access (optional, good practice)
-/*
-if (!isset($loggedInUserRole) || $loggedInUserRole !== 'student') {
-    // Maybe redirect to login or show an error page
-    // header('Location: ../Controller/loginController.php'); // Example redirect
-    die("Access Denied. Please log in as a student.");
-}
-*/
+// --- Default Picture Paths ---
+$defaultCompanyPic = '../View/images/default_company.png'; // Use relative path again
+$defaultUserPic = '../View/images/default_avatar.png';    // Use relative path again
 
-// Define default picture paths
-$defaultCompanyPic = '../View/images/default_company.png'; // Default company logo
-$defaultUserPic = '../View/images/default_avatar.png';    // Default user avatar
+// --- Initialize User Details ---
+$profilePicSrc = null;
+$displayName = 'Student';
+$displayEmail = '';
 
-// --- Fetch User Details for Profile Display (Adapted from wishlistView.php logic) ---
-$profilePicSrc = null;              // Start with null, default applied in HTML
-$displayName = 'Student';           // Default name
-$displayEmail = '';                 // Default email
-
-// Check if details are needed (user is logged in) and prerequisites are met (db connection assumed available)
-// Ideally, the controller (applicationController.php) should handle fetching and passing this data.
-if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to be passed by controller)
+// --- Fetch User Details for Profile Display ---
+if (isset($loggedInUserId) && isset($conn)) {
     try {
-        // Ensure the User model is included only once
-        // Use require_once for safety, even if class_exists check is present
-        require_once __DIR__ . '/../Model/user.php'; // Adjust path if needed
-
-        $userModel = new User($conn); // Assumes $conn is a valid PDO connection
-        $userDetails = $userModel->readStudent($loggedInUserId); // Fetch student data
+        require_once __DIR__ . '/../Model/user.php';
+        $userModel = new User($conn);
+        $userDetails = $userModel->readStudent($loggedInUserId);
 
         if ($userDetails) {
-            // Assign to the variables used in the HTML header
-            $displayName = htmlspecialchars($userDetails['name']);
-            $displayEmail = htmlspecialchars($userDetails['email']);
-
-            // Check for profile picture data
+            $displayName = htmlspecialchars($userDetails['name'] ?? $displayName);
+            $displayEmail = htmlspecialchars($userDetails['email'] ?? $displayEmail);
             if (!empty($userDetails['profile_picture_mime']) && !empty($userDetails['profile_picture'])) {
-                // Handle potential resource stream from database
-                $picData = is_resource($userDetails['profile_picture']) ?
-                    stream_get_contents($userDetails['profile_picture']) :
-                    $userDetails['profile_picture'];
-
-                // If picture data is successfully retrieved, create the data URI
+                 $picData = is_resource($userDetails['profile_picture']) ? stream_get_contents($userDetails['profile_picture']) : $userDetails['profile_picture'];
                 if ($picData) {
-                    // Note: htmlspecialchars is applied to the mime type part for safety within the data URI structure
-                    $profilePicSrc = 'data:' . htmlspecialchars($userDetails['profile_picture_mime']) .
-                        ';base64,' . base64_encode($picData);
+                    $profilePicSrc = 'data:' . htmlspecialchars($userDetails['profile_picture_mime']) . ';base64,' . base64_encode($picData);
                 }
             }
         }
-
     } catch (Exception $e) {
-        // Log the error, but don't break the page; defaults ($profilePicSrc = null, etc.) will be used.
         error_log("Error fetching student details for applications view header (ID: $loggedInUserId): " . $e->getMessage());
-        // Ensure default name/email are set if fetch failed completely
-        $displayName = 'Student';
-        $displayEmail = '';
-        // $profilePicSrc remains null, handled by '??' in HTML
     }
 }
 // --- End Fetch User Details ---
@@ -72,7 +42,7 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
     <title>My Applications - Navigui</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../View/css/stud.application.css">
+    <link rel="stylesheet" href="../View/css/stud.application.css"> <!-- Relative Path -->
     <style>
         /* Add any additional page-specific styles here if needed */
     </style>
@@ -82,7 +52,7 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
         <nav class="navbar">
             <div class="nav-container bento-card">
                 <!-- Logo -->
-                <a href="../View/student.php" class="logo">
+                <a href="../View/student.php" class="logo"> <!-- Relative Path -->
                     <div class="logo-image-container">
                         <i class="fas fa-graduation-cap"></i>
                     </div>
@@ -91,12 +61,12 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
 
                 <!-- Menu Items -->
                 <div class="menu-items">
-                    <a href="../View/student.php" class="menu-item">Home</a>
-                    <a href="../Controller/offerController.php?action=view" class="menu-item">Offers</a>
-                    <a href="../Controller/wishlistController.php?action=view" class="menu-item">Wishlist</a>
-                    <a href="../Controller/applicationController.php?action=myapps" class="menu-item active">Applications</a>
+                    <a href="../View/student.php" class="menu-item">Home</a> <!-- Relative Path -->
+                    <a href="../Controller/offerController.php?action=view" class="menu-item">Offers</a> <!-- Relative Path -->
+                    <a href="../Controller/wishlistController.php?action=view" class="menu-item">Wishlist</a> <!-- Relative Path -->
+                    <a href="../Controller/applicationController.php?action=myapps" class="menu-item active">Applications</a> <!-- Relative Path -->
                     <?php if (isset($loggedInUserId)): ?>
-                    <a href="../Controller/editUser.php?id=<?= htmlspecialchars((string)$loggedInUserId) ?>&type=student" class="menu-item">Profile</a>
+                    <a href="../Controller/editUser.php?id=<?= htmlspecialchars((string)$loggedInUserId) ?>&type=student" class="menu-item">Profile</a> <!-- Relative Path -->
                     <?php endif; ?>
                 </div>
 
@@ -110,32 +80,31 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
                     <?php if (isset($loggedInUserId)): ?>
                     <div class="user-dropdown">
                         <?php
-                        // Variables ($profilePicSrc, $displayName, $displayEmail) are now prepared by the PHP block above
-                        // Use null coalescing operator (??) to fall back to the default picture if $profilePicSrc is null
+                        $finalPicSrc = $profilePicSrc ?? $defaultUserPic; // Uses relative default path now
                         ?>
-                        <img src="<?= $profilePicSrc ?? $defaultUserPic ?>" alt="Profile" class="user-avatar">
+                        <img src="<?= $finalPicSrc ?>" alt="Profile" class="user-avatar"> <!-- Removed htmlspecialchars -->
                         <div class="dropdown-menu">
                             <div class="dropdown-header">
-                                <img src="<?= $profilePicSrc ?? $defaultUserPic ?>" alt="Profile" class="dropdown-avatar">
+                                <img src="<?= $finalPicSrc ?>" alt="Profile" class="dropdown-avatar"> <!-- Removed htmlspecialchars -->
                                 <div class="dropdown-user-info">
                                     <div class="dropdown-user-name"><?= htmlspecialchars($displayName) ?></div>
                                     <div class="dropdown-user-email"><?= htmlspecialchars($displayEmail) ?></div>
                                 </div>
                             </div>
                             <div class="dropdown-items">
-                                <a href="../Controller/editUser.php?id=<?= htmlspecialchars((string)$loggedInUserId) ?>&type=student" class="dropdown-item">
+                                <a href="../Controller/editUser.php?id=<?= htmlspecialchars((string)$loggedInUserId) ?>&type=student" class="dropdown-item"> <!-- Relative Path -->
                                     <i class="fas fa-user-edit"></i>
                                     <span>Edit Profile</span>
                                 </a>
-                                <a href="../Controller/applicationController.php?action=myapps" class="dropdown-item">
+                                <a href="../Controller/applicationController.php?action=myapps" class="dropdown-item"> <!-- Relative Path -->
                                     <i class="fas fa-file-alt"></i>
                                     <span>My Applications</span>
                                 </a>
-                                <a href="../Controller/wishlistController.php?action=view" class="dropdown-item">
+                                <a href="../Controller/wishlistController.php?action=view" class="dropdown-item"> <!-- Relative Path -->
                                     <i class="fas fa-heart"></i>
                                     <span>My Wishlist</span>
                                 </a>
-                                <a href="../Controller/logoutController.php" class="dropdown-item logout">
+                                <a href="../Controller/logoutController.php" class="dropdown-item logout"> <!-- Relative Path -->
                                     <i class="fas fa-sign-out-alt"></i>
                                     <span>Logout</span>
                                 </a>
@@ -156,20 +125,21 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
             <!-- Mobile Menu -->
             <div class="mobile-menu" id="mobile-menu">
                 <div class="mobile-menu-content">
-                    <a href="../View/student.php" class="mobile-menu-item">Home</a>
-                    <a href="../Controller/offerController.php?action=view" class="mobile-menu-item">Offers</a>
-                    <a href="../Controller/wishlistController.php?action=view" class="mobile-menu-item">Wishlist</a>
-                    <a href="../Controller/applicationController.php?action=myapps" class="mobile-menu-item active">Applications</a>
+                    <a href="../View/student.php" class="mobile-menu-item">Home</a> <!-- Relative Path -->
+                    <a href="../Controller/offerController.php?action=view" class="mobile-menu-item">Offers</a> <!-- Relative Path -->
+                    <a href="../Controller/wishlistController.php?action=view" class="mobile-menu-item">Wishlist</a> <!-- Relative Path -->
+                    <a href="../Controller/applicationController.php?action=myapps" class="mobile-menu-item active">Applications</a> <!-- Relative Path -->
                     <?php if (isset($loggedInUserId)): ?>
-                    <a href="../Controller/editUser.php?id=<?= htmlspecialchars((string)$loggedInUserId) ?>&type=student" class="mobile-menu-item">Profile</a>
+                    <a href="../Controller/editUser.php?id=<?= htmlspecialchars((string)$loggedInUserId) ?>&type=student" class="mobile-menu-item">Profile</a> <!-- Relative Path -->
                     <?php endif; ?>
-                    <a href="../Controller/logoutController.php" class="mobile-menu-item" style="color: #ef4444;">Logout <i class="fas fa-sign-out-alt"></i></a>
+                    <a href="../Controller/logoutController.php" class="mobile-menu-item" style="color: #ef4444;">Logout <i class="fas fa-sign-out-alt"></i></a> <!-- Relative Path -->
                 </div>
             </div>
         </nav>
     </header>
 
     <main>
+       <!-- Rest of the main content (page header, application list) remains the same -->
         <section class="page-header">
             <div class="container">
                 <div class="page-icon">
@@ -202,18 +172,19 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
                     <div class="empty-state">
                         <i class="fas fa-clipboard-list"></i>
                         <p>You haven't applied to any internships yet. Browse available offers and start applying today!</p>
-                        <a href="../Controller/offerController.php?action=view" class="btn">
+                        <a href="../Controller/offerController.php?action=view" class="btn"> <!-- Relative Path -->
                             <i class="fas fa-search"></i> Browse Internship Offers
                         </a>
                     </div>
                 <?php else: ?>
                     <?php foreach ($applications as $app): ?>
-                        <div class="application-card">
-                            <div class="application-header">
+                         <div class="application-card">
+                             <!-- Application card content remains the same -->
+                             <div class="application-header">
                                 <?php
-                                // Company logo logic remains the same
-                                $companyLogoSrc = $defaultCompanyPic;
-                                if (!empty($app['company_picture']) && !empty($app['company_picture_mime'])) {
+                                // Company logo logic
+                                $companyLogoSrc = $defaultCompanyPic; // Uses relative path
+                                if (!empty($app['company_picture_mime']) && !empty($app['company_picture'])) {
                                     $logoData = is_resource($app['company_picture']) ? stream_get_contents($app['company_picture']) : $app['company_picture'];
                                     if ($logoData) {
                                         $companyLogoSrc = 'data:' . htmlspecialchars($app['company_picture_mime']) . ';base64,' . base64_encode($logoData);
@@ -221,33 +192,36 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
                                 }
                                 ?>
                                 <img src="<?= $companyLogoSrc ?>" alt="<?= htmlspecialchars($app['name_company'] ?? 'Company') ?>" class="company-logo">
-                                <h3><?= htmlspecialchars($app['title'] ?? 'Internship') ?></h3>
+                                <h3><?= htmlspecialchars($app['internship_title'] ?? $app['title'] ?? 'Internship') ?></h3>
                             </div>
 
                             <div class="application-details">
                                 <p><strong>Company:</strong> <span><?= htmlspecialchars($app['name_company'] ?? 'N/A') ?></span></p>
                                 <p><strong>Location:</strong> <span><?= htmlspecialchars($app['company_location'] ?? 'N/A') ?></span></p>
                                 <p><strong>Salary:</strong> <span><?= htmlspecialchars($app['remuneration'] ?? 'N/A') ?> €/month</span></p>
-                                <p><strong>Duration:</strong> <span><?= htmlspecialchars($app['duration'] ?? 'N/A') ?> months</span></p>
-                                <p><strong>Applied on:</strong> <span><?= htmlspecialchars(date('F j, Y', strtotime($app['created_at'] ?? date('Y-m-d')))) ?></span></p>
+                                <!-- Duration removed -->
+                                <p><strong>Applied on:</strong> <span><?= htmlspecialchars(date('F j, Y', strtotime($app['app_created_at'] ?? $app['created_at'] ?? 'now'))) ?></span></p>
                             </div>
 
                             <div class="application-status">
                                 <?php
-                                $status = $app['status'] ?? 'pending';
-                                $statusIcon = 'clock';
-                                $statusText = 'Pending';
+                                $status = $app['status'] ?? 'pending documents'; // Use actual status column name, default to your ENUM default
+                                $statusIcon = 'file-alt'; // Default icon
+                                $statusText = 'Pending Documents'; // Default text
 
-                                if ($status === 'accepted') {
-                                    $statusIcon = 'check-circle';
-                                    $statusText = 'Accepted';
-                                } elseif ($status === 'rejected') {
-                                    $statusIcon = 'times-circle';
-                                    $statusText = 'Rejected';
+                                // Map your specific enum values
+                                switch (strtolower($status)) {
+                                     case 'submitted': $statusIcon = 'paper-plane'; $statusText = 'Submitted'; break;
+                                     case 'under review': $statusIcon = 'search'; $statusText = 'Under Review'; break;
+                                     case 'accepted': $statusIcon = 'check-circle'; $statusText = 'Accepted'; break;
+                                     case 'rejected': $statusIcon = 'times-circle'; $statusText = 'Rejected'; break;
+                                     case 'withdrawn': $statusIcon = 'undo'; $statusText = 'Withdrawn'; break;
+                                     case 'pending documents':
+                                     default: $statusIcon = 'file-alt'; $statusText = 'Pending Documents'; break;
                                 }
                                 ?>
-                                <span class="status-badge status-<?= strtolower($status) ?>">
-                                    <i class="fas fa-<?= $statusIcon ?>"></i> <?= $statusText ?>
+                                <span class="status-badge status-<?= strtolower(str_replace(' ', '-', $status)) ?>">
+                                    <i class="fas fa-<?= $statusIcon ?>"></i> <?= htmlspecialchars($statusText) ?>
                                 </span>
                             </div>
 
@@ -262,7 +236,7 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
                                 <?php if (!empty($app['cv'])): ?>
                                 <div class="cv-info">
                                     <h4>Your CV</h4>
-                                    <p><?= htmlspecialchars($app['cv']) ?></p> <!-- Assuming 'cv' is just the filename/path -->
+                                    <p><i class="fas fa-file-pdf"></i> CV Submitted (<?= htmlspecialchars(basename($app['cv'])) ?>)</p>
                                 </div>
                                 <?php endif; ?>
 
@@ -283,7 +257,8 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
     </main>
 
     <footer class="footer">
-        <div class="container">
+        <!-- Footer content remains the same -->
+         <div class="container">
             <div class="footer-content">
                 <div class="footer-column">
                     <div class="footer-logo">
@@ -339,76 +314,40 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
     </footer>
 
     <script>
+        // JS remains the same
         document.addEventListener('DOMContentLoaded', function() {
             // Theme Toggle
             const themeToggle = document.getElementById('themeToggle');
             const currentTheme = localStorage.getItem('theme') || 'light'; // Default to light
-
             document.documentElement.setAttribute('data-theme', currentTheme);
-            if (currentTheme === 'dark') {
-                themeToggle.checked = true;
-            }
-
+            if (currentTheme === 'dark') { themeToggle.checked = true; }
             themeToggle.addEventListener('change', function() {
                 const newTheme = this.checked ? 'dark' : 'light';
                 document.documentElement.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
             });
-
             // Mobile Menu Toggle
             const mobileToggle = document.getElementById('mobile-toggle');
             const mobileMenu = document.getElementById('mobile-menu');
-            const navContainer = document.querySelector('.nav-container'); // Get nav container
-
+            const navContainer = document.querySelector('.nav-container');
             if (mobileToggle && mobileMenu) {
-                mobileToggle.addEventListener('click', function(event) {
-                    event.stopPropagation(); // Prevent click from bubbling up
-                    mobileMenu.classList.toggle('active');
-                    mobileToggle.classList.toggle('active');
-                });
-
-                // Close menu if clicking outside of it
+                mobileToggle.addEventListener('click', function(event) { event.stopPropagation(); mobileMenu.classList.toggle('active'); mobileToggle.classList.toggle('active'); });
                 document.addEventListener('click', function(event) {
                      const isClickInsideMenu = mobileMenu.contains(event.target);
-                     // Check if click is inside the nav container (where toggle button is)
                      const isClickInsideNav = navContainer ? navContainer.contains(event.target) : false;
-
-                     if (mobileMenu.classList.contains('active') && !isClickInsideMenu && !isClickInsideNav) {
-                         mobileMenu.classList.remove('active');
-                         mobileToggle.classList.remove('active');
-                     }
+                     if (mobileMenu.classList.contains('active') && !isClickInsideMenu && !isClickInsideNav) { mobileMenu.classList.remove('active'); mobileToggle.classList.remove('active'); }
                 });
             }
-
-             // User Dropdown Toggle (Add this if not already present/correct)
+             // User Dropdown Toggle
              const userAvatar = document.querySelector('.user-avatar');
              const dropdownMenu = document.querySelector('.dropdown-menu');
-
              if (userAvatar && dropdownMenu) {
-                userAvatar.addEventListener('click', function(event) {
-                    event.stopPropagation(); // Prevent document click listener
-                    dropdownMenu.classList.toggle('active');
-                });
-
-                // Close dropdown if clicking outside
-                document.addEventListener('click', function(event) {
-                    if (dropdownMenu.classList.contains('active') && !dropdownMenu.contains(event.target) && event.target !== userAvatar) {
-                        dropdownMenu.classList.remove('active');
-                    }
-                });
+                userAvatar.addEventListener('click', function(event) { event.stopPropagation(); dropdownMenu.classList.toggle('active'); });
+                document.addEventListener('click', function(event) { if (dropdownMenu.classList.contains('active') && !dropdownMenu.contains(event.target) && event.target !== userAvatar) { dropdownMenu.classList.remove('active'); } });
             }
-
-            // Auto hide success/error messages after 5 seconds
+            // Auto hide success/error messages
             const messages = document.querySelectorAll('.message.success-message, .message.error-message');
-            messages.forEach(message => {
-                setTimeout(() => {
-                    message.style.transition = 'opacity 0.5s ease';
-                    message.style.opacity = '0';
-                    setTimeout(() => {
-                        message.style.display = 'none';
-                    }, 500); // Wait for transition
-                }, 5000); // 5 seconds
-            });
+            messages.forEach(message => { setTimeout(() => { message.style.transition = 'opacity 0.5s ease'; message.style.opacity = '0'; setTimeout(() => { message.style.display = 'none'; }, 500); }, 5000); });
         });
     </script>
 </body>

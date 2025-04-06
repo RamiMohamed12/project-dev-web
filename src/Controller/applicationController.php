@@ -5,8 +5,9 @@
 require_once __DIR__ . '/../../config/config.php'; // Ensures $conn is available
 require_once __DIR__ . '/../Model/Application.php';
 require_once __DIR__ . '/../Model/Internship.php';
-// No need to include Company model here unless needed for other actions
+require_once __DIR__ . '/../Model/user.php'; // For profile picture logic
 require_once __DIR__ . '/../Auth/AuthSession.php';
+require_once __DIR__ . '/../Auth/AuthCheck.php'; // For checking roles
 
 // Start session if not already active
 if (session_status() == PHP_SESSION_NONE) {
@@ -24,38 +25,43 @@ $loggedInUserId = AuthSession::getUserData('user_id');
 
 // Check if $conn is set from config.php
 if (!isset($conn) || !$conn) {
-    // Log critical error and stop
     error_log("Database connection failed in applicationController.php");
     die("A critical database connection error occurred. Please contact support.");
 }
 
-// Authorization: Only Students can generally interact here (apply, view own apps)
-// Pilote/Admin might view all apps via a different controller or action later.
-if ($loggedInUserRole !== 'student') {
-    // Redirect non-students appropriately
-    header("Location: ../View/login.php?error=" . urlencode("Access Denied: This section is for students."));
-    exit();
-}
-
-// Ensure student ID is valid
-if (!$loggedInUserId) {
-    error_log("Student User ID not found in session for applicationController.");
-    header("Location: ../View/login.php?error=" . urlencode("Session error. Please login again."));
-    exit();
-}
-
-
 // Instantiate Models
 $applicationModel = new Application($conn);
 $internshipModel = new Internship($conn);
+$userModel = new User($conn); // For profile picture logic
 
 // Default values
 $errorMessage = '';
 $successMessage = '';
-$pageTitle = 'Apply for Internship'; // Default title
+$pageTitle = 'Internship Applications'; // General title
 
-// Get action from GET or POST
-$action = $_GET['action'] ?? ($_POST['action'] ?? 'myapps'); // Default to 'myapps' maybe? Or handle invalid action
+// Get action from GET or POST - default depends on role now
+$defaultAction = ($loggedInUserRole === 'student') ? 'myapps' : 'manage'; // Default action based on role
+$action = $_GET['action'] ?? ($_POST['action'] ?? $defaultAction);
+
+// --- Authorization Check based on Action ---
+$allowedStudentActions = ['apply', 'submit', 'myapps'];
+$allowedManagementActions = ['manage', 'updateStatus', 'downloadCv'];
+
+if ($loggedInUserRole === 'student' && !in_array($action, $allowedStudentActions)) {
+    $_SESSION['error_message'] = "Access Denied.";
+    header("Location: ../Controller/offerController.php?action=view"); // Redirect student to offers
+    exit();
+} elseif (($loggedInUserRole === 'admin' || $loggedInUserRole === 'pilote') && !in_array($action, $allowedManagementActions)) {
+     $_SESSION['error_message'] = "Invalid action requested for your role.";
+     AuthCheck::redirectToRoleDashboard($loggedInUserRole); // Use helper to redirect
+     exit();
+} elseif (!in_array($loggedInUserRole, ['student', 'admin', 'pilote'])) {
+     $_SESSION['error_message'] = "Invalid user role.";
+     header("Location: ../View/login.php");
+     exit();
+}
+// --- End Authorization Check ---
+
 
 // Handle messages from session/redirects
 if (isset($_SESSION['success_message'])) {
@@ -66,211 +72,201 @@ if (isset($_SESSION['error_message'])) {
     $errorMessage = htmlspecialchars($_SESSION['error_message']);
     unset($_SESSION['error_message']);
 }
-// Allow overriding by GET parameters if needed (e.g., direct link with message)
-if (isset($_GET['success'])) {
-    $successMessage = htmlspecialchars($_GET['success']);
-}
-if (isset($_GET['error'])) {
-    $errorMessage = htmlspecialchars($_GET['error']);
-}
+
+// *** FIX: Define allowed statuses based on the database ENUM ***
+$allowed_statuses = ['pending', 'accepted', 'rejected'];
 
 
 try {
     switch ($action) {
-        // View application form
+        // ====================================
+        // == Student Actions ('apply', 'submit', 'myapps') ==
+        // ====================================
         case 'apply':
-            $pageTitle = 'Apply for Internship'; // Set specific title
-
-            if (!isset($_GET['id']) || !filter_var($_GET['id'], FILTER_VALIDATE_INT)) {
-                $_SESSION['error_message'] = "Invalid internship ID provided.";
-                header("Location: offerController.php?action=view");
-                exit();
-            }
-
-            $internshipId = (int)$_GET['id'];
-
-            // Check if already applied
-            if ($applicationModel->hasApplied($loggedInUserId, $internshipId)) {
-                $_SESSION['error_message'] = "You have already applied for this internship.";
-                header("Location: offerController.php?action=view");
-                exit();
-            }
-
-            // Get internship details
-            $internshipDetails = $internshipModel->readInternship($internshipId); // Use specific method if available
-             if (!$internshipDetails) {
-                 $_SESSION['error_message'] = "Internship details not found (ID: $internshipId).";
-                 header("Location: offerController.php?action=view");
-                 exit();
-             }
-
-            // Show application form view
-            include __DIR__ . '/../View/applicationFormView.php';
-            break;
-
-        // Process application submission
         case 'submit':
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                header("Location: offerController.php?action=view"); // Redirect non-POST requests
-                exit();
-            }
+            // Double check student role and ID
+            if ($loggedInUserRole !== 'student') { AuthCheck::redirectToRoleDashboard($loggedInUserRole); exit(); }
+            if (!$loggedInUserId) { AuthCheck::redirectToLogin("Session error."); exit(); }
 
-            // Validate inputs
-            $internshipId = filter_input(INPUT_POST, 'internship_id', FILTER_VALIDATE_INT);
-            $motivationLetter = trim($_POST['motivation_letter'] ?? '');
-
-            // Ensure we have a valid internship ID from the form post
-            if (!$internshipId) {
-                 error_log("Missing or invalid internship_id in application submission.");
-                 // Redirect back to offers view with a generic error
-                 $_SESSION['error_message'] = "Submission failed: Invalid internship reference.";
-                 header("Location: offerController.php?action=view");
-                 exit();
-            }
-             // Fetch details *before* potentially including the form view again on error
-             $internshipDetails = $internshipModel->readInternship($internshipId);
-             if (!$internshipDetails) {
-                 error_log("Internship details not found during submission (ID: $internshipId).");
-                 $_SESSION['error_message'] = "Submission failed: Internship no longer exists.";
-                 header("Location: offerController.php?action=view");
-                 exit();
-             }
-
-
-            if (empty($motivationLetter)) {
-                $errorMessage = "Motivation letter is required.";
-                // Redisplay form with error message
-                $pageTitle = 'Apply for Internship'; // Reset title
-                include __DIR__ . '/../View/applicationFormView.php';
-                exit();
-            }
-
-            // Check if already applied (redundant check, but safe)
-            if ($applicationModel->hasApplied($loggedInUserId, $internshipId)) {
-                 $_SESSION['error_message'] = "You have already applied for this internship.";
-                 header("Location: offerController.php?action=view");
-                 exit();
-             }
-
-            // Handle CV upload if provided
-            $cvFilePathForDb = null; // Path to store in DB (relative)
-
-            if (isset($_FILES['cv_file']) && $_FILES['cv_file']['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = __DIR__ . '/../../uploads/cv/'; // Absolute path for moving file
-                $allowedExts = ['pdf', 'doc', 'docx'];
-                $maxFileSize = 5 * 1024 * 1024; // 5 MB limit
-
-                // Create directory if it doesn't exist
-                if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true)) { // Use 0775 for permissions
-                     $errorMessage = "Server error: Cannot create upload directory.";
-                     error_log("Failed to create CV upload directory: " . $uploadDir);
-                     $pageTitle = 'Apply for Internship';
-                     include __DIR__ . '/../View/applicationFormView.php';
-                     exit();
-                }
-
-                $cvOriginalName = basename($_FILES['cv_file']['name']);
-                $cvFileExt = strtolower(pathinfo($cvOriginalName, PATHINFO_EXTENSION));
-                $cvFileSize = $_FILES['cv_file']['size'];
-
-                // Validate extension and size
-                if (!in_array($cvFileExt, $allowedExts)) {
-                    $errorMessage = "Invalid CV file type. Only PDF, DOC, and DOCX are allowed.";
-                } elseif ($cvFileSize > $maxFileSize) {
-                     $errorMessage = "CV file size exceeds the limit of " . ($maxFileSize / 1024 / 1024) . " MB.";
-                }
-
-                if ($errorMessage) { // If validation failed
-                     $pageTitle = 'Apply for Internship';
-                     include __DIR__ . '/../View/applicationFormView.php';
-                     exit();
-                }
-
-                // Generate unique filename to prevent overwrites and sanitize
-                $safeBaseName = preg_replace("/[^a-zA-Z0-9._-]/", "_", pathinfo($cvOriginalName, PATHINFO_FILENAME));
-                $uniqueFileName = uniqid('cv_' . $loggedInUserId . '_', true) . '.' . $cvFileExt; // More unique name
-                $absoluteCvPath = $uploadDir . $uniqueFileName;
-                $cvFilePathForDb = 'uploads/cv/' . $uniqueFileName; // Relative path for DB
-
-                // Move uploaded file
-                if (!move_uploaded_file($_FILES['cv_file']['tmp_name'], $absoluteCvPath)) {
-                    $errorMessage = "Failed to save uploaded CV file. Please try again.";
-                    error_log("Failed to move uploaded file to: " . $absoluteCvPath);
-                     $pageTitle = 'Apply for Internship';
-                     include __DIR__ . '/../View/applicationFormView.php';
-                     exit();
-                }
-            } // End CV handling
-
-
-            // Submit application using the relative path for the DB
-            $result = $applicationModel->createApplication(
-                $loggedInUserId,
-                $internshipId,
-                $motivationLetter,
-                $cvFilePathForDb // Pass the relative path or null
-            );
-
-            if ($result) {
-                $_SESSION['success_message'] = "Your application has been submitted successfully!";
-                header("Location: applicationController.php?action=myapps"); // Redirect to myapps view
-                exit();
-            } else {
-                // If creation failed, try to retrieve specific error from model
-                $errorMessage = $applicationModel->getError() ?: "An unknown error occurred while submitting your application.";
-                // Remove uploaded file if DB insert failed? Optional, depends on desired behavior.
-                /* if ($cvFilePathForDb && file_exists($absoluteCvPath)) {
-                    unlink($absoluteCvPath);
-                } */
+            if ($action === 'apply') {
                 $pageTitle = 'Apply for Internship';
-                include __DIR__ . '/../View/applicationFormView.php'; // Show form again with error
-                exit();
+                // Apply Logic... (get ID, check if applied, get details, include form view)
+                 if (!isset($_GET['id']) || !filter_var($_GET['id'], FILTER_VALIDATE_INT)) { $_SESSION['error_message'] = "Invalid internship ID."; header("Location: ../Controller/offerController.php?action=view"); exit(); }
+                 $internshipId = (int)$_GET['id'];
+                 if ($applicationModel->hasApplied($loggedInUserId, $internshipId)) { $_SESSION['error_message'] = "Already applied."; header("Location: ../Controller/offerController.php?action=view"); exit(); }
+                 $internshipDetails = $internshipModel->readInternship($internshipId);
+                 if (!$internshipDetails) { $_SESSION['error_message'] = "Internship not found."; header("Location: ../Controller/offerController.php?action=view"); exit(); }
+                 // Pass $conn to the view for profile pic fetch
+                 include __DIR__ . '/../View/applicationFormView.php';
+
+            } else { // submit action
+                $pageTitle = 'Submit Application';
+                 // Submit Logic... (check POST, validate, handle CV, call createApplication, redirect)
+                 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header("Location: ../Controller/offerController.php?action=view"); exit(); }
+                 $internshipId = filter_input(INPUT_POST, 'internship_id', FILTER_VALIDATE_INT);
+                 $motivationLetter = trim($_POST['motivation_letter'] ?? '');
+                 if (!$internshipId) { $_SESSION['error_message'] = "Submission failed: Invalid internship ref."; header("Location: ../Controller/offerController.php?action=view"); exit(); }
+                 // Fetch details again for redisplay on error AND before create call
+                 $internshipDetails = $internshipModel->readInternship($internshipId);
+                 if (!$internshipDetails) { $_SESSION['error_message'] = "Submission failed: Internship not found."; header("Location: ../Controller/offerController.php?action=view"); exit(); }
+                 if (empty($motivationLetter)) { $errorMessage = "Motivation letter required."; include __DIR__.'/../View/applicationFormView.php'; exit(); } // Redisplay form
+                 if ($applicationModel->hasApplied($loggedInUserId, $internshipId)) { $_SESSION['error_message'] = "Already applied."; header("Location: ../Controller/offerController.php?action=view"); exit(); }
+
+                 // CV Upload Handling
+                 $cvFilePathForDb = null;
+                 if (isset($_FILES['cv_file']) && $_FILES['cv_file']['error'] === UPLOAD_ERR_OK) {
+                     $uploadDir = __DIR__ . '/../../uploads/cv/'; $allowedExts = ['pdf', 'doc', 'docx']; $maxFileSize = 5 * 1024 * 1024;
+                     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true)) { $errorMessage="Server error: Cannot create upload dir."; include __DIR__.'/../View/applicationFormView.php'; exit();}
+                     $cvOriginalName = basename($_FILES['cv_file']['name']); $cvFileExt = strtolower(pathinfo($cvOriginalName, PATHINFO_EXTENSION)); $cvFileSize = $_FILES['cv_file']['size'];
+                     if (!in_array($cvFileExt, $allowedExts)) { $errorMessage = "Invalid CV file type."; include __DIR__.'/../View/applicationFormView.php'; exit(); }
+                     if ($cvFileSize > $maxFileSize) { $errorMessage = "CV file size exceeds limit."; include __DIR__.'/../View/applicationFormView.php'; exit(); }
+                     $safeBaseName = preg_replace("/[^a-zA-Z0-9._-]/", "_", pathinfo($cvOriginalName, PATHINFO_FILENAME));
+                     $uniqueFileName = uniqid('cv_' . $loggedInUserId . '_', true) . '.' . $cvFileExt;
+                     $absoluteCvPath = $uploadDir . $uniqueFileName; $cvFilePathForDb = 'uploads/cv/' . $uniqueFileName;
+                     if (!move_uploaded_file($_FILES['cv_file']['tmp_name'], $absoluteCvPath)) { $errorMessage = "Failed to save uploaded CV."; error_log("Failed move to: ".$absoluteCvPath); include __DIR__.'/../View/applicationFormView.php'; exit(); }
+                 }
+                 // Create Application Call
+                 $result = $applicationModel->createApplication($loggedInUserId, $internshipId, $motivationLetter, $cvFilePathForDb);
+                 if ($result) { $_SESSION['success_message'] = "Application submitted!"; header("Location: ../Controller/applicationController.php?action=myapps"); exit(); }
+                  else { $errorMessage = $applicationModel->getError() ?: "Failed to submit."; include __DIR__ . '/../View/applicationFormView.php'; exit(); } // Redisplay form
             }
             break;
 
-        // View student's applications
         case 'myapps':
-            $pageTitle = "My Applications";
+            // Double check student role and ID
+            if ($loggedInUserRole !== 'student') { AuthCheck::redirectToRoleDashboard($loggedInUserRole); exit(); }
+            if (!$loggedInUserId) { AuthCheck::redirectToLogin("Session error."); exit(); }
 
-            // Fetch applications for the logged-in student
+            $pageTitle = "My Applications";
             $applications = $applicationModel->getStudentApplications($loggedInUserId);
 
-            // DEBUGGING: Check what the model returned
-            // error_log("Student ID " . $loggedInUserId . " | Applications fetched: " . print_r($applications, true));
-
-            // Check if fetching applications failed (e.g., DB error in model)
-             if ($applications === false || $applications === null) { // Check explicitly if model indicates error, e.g., by returning false
+             if ($applications === false) {
                  $errorMessage = "Could not retrieve your applications due to a database error.";
-                 error_log("Error fetching applications for student $loggedInUserId: " . $applicationModel->getError());
-                 $applications = []; // Ensure $applications is an array for the view
-             } elseif (empty($applications)) {
-                 // This is not an error, just means no applications found. The view handles this.
-                 error_log("No applications found for student ID: " . $loggedInUserId);
+                 $applications = [];
              }
 
-
-            // *** IMPORTANT: Pass $conn to the view for the profile picture logic ***
+            // Pass $conn for profile picture logic
             include __DIR__ . '/../View/myApplicationsView.php';
             break;
 
-        default:
-             // Handle invalid actions for students
-             $_SESSION['error_message'] = "Invalid action requested.";
-             header("Location: offerController.php?action=view");
+        // ====================================
+        // == Admin/Pilote Actions ('manage', 'updateStatus', 'downloadCv') ==
+        // ====================================
+        case 'manage':
+            // Double check admin/pilote role
+            if (!in_array($loggedInUserRole, ['admin', 'pilote'])) { AuthCheck::redirectToLogin(); exit(); }
+
+            $pageTitle = "Manage Student Applications";
+            $piloteFilterId = ($loggedInUserRole === 'pilote') ? $loggedInUserId : null; // Filter for pilote, null for admin
+
+            $applications = $applicationModel->getApplicationsForManagement($piloteFilterId);
+
+             if ($applications === false) {
+                 $errorMessage = "Could not retrieve applications for management."; // Simplified error
+                 error_log("Error fetching apps for management (Pilote: $piloteFilterId): ".$applicationModel->getError());
+                 $applications = []; // Ensure array for view
+             }
+
+            // Pass $conn and $userModel for header, $allowed_statuses for dropdown
+            include __DIR__ . '/../View/manageApplicationsView.php';
+            break;
+
+        case 'updateStatus':
+             // Double check admin/pilote role
+             if (!in_array($loggedInUserRole, ['admin', 'pilote'])) { AuthCheck::redirectToLogin(); exit(); }
+             if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header("Location: ../Controller/applicationController.php?action=manage"); exit(); }
+
+            // Validate input
+            $applicationId = filter_input(INPUT_POST, 'application_id', FILTER_VALIDATE_INT);
+            // Get the submitted status EXACTLY as sent (should be lowercase now)
+            $newStatus = trim($_POST['new_status'] ?? '');
+
+            if (!$applicationId || empty($newStatus)) {
+                $_SESSION['error_message'] = "Invalid input for status update.";
+                header("Location: ../Controller/applicationController.php?action=manage");
+                exit();
+            }
+
+             // Authorization check for Pilote
+             if ($loggedInUserRole === 'pilote') {
+                $appDetails = $applicationModel->getApplicationById($applicationId);
+                if (!$appDetails || $appDetails['created_by_pilote_id'] != $loggedInUserId) {
+                     $_SESSION['error_message'] = "Unauthorized action."; // Simpler message
+                     header("Location: ../Controller/applicationController.php?action=manage");
+                     exit();
+                }
+            }
+
+            // Attempt to update status (Model now handles validation against its internal list)
+            if ($applicationModel->updateStatus($applicationId, $newStatus)) {
+                // Use ucwords for display message
+                $_SESSION['success_message'] = "Application #{$applicationId} status updated to '" . htmlspecialchars(ucwords($newStatus)) . "'.";
+            } else {
+                 // Use ucwords for display message if it was an invalid status error
+                 $modelError = $applicationModel->getError();
+                 if (strpos($modelError, 'Invalid status value') !== false) {
+                     $_SESSION['error_message'] = $modelError; // Show the specific validation error
+                 } else {
+                      $_SESSION['error_message'] = "Failed to update status for application #{$applicationId}."; // Generic DB error
+                 }
+            }
+
+            header("Location: ../Controller/applicationController.php?action=manage");
+            exit();
+            break;
+
+        case 'downloadCv':
+            // Double check admin/pilote role
+            if (!in_array($loggedInUserRole, ['admin', 'pilote'])) { AuthCheck::redirectToLogin(); exit(); }
+
+             $applicationId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+             if (!$applicationId) { $_SESSION['error_message'] = "Invalid Application ID."; header("Location: ../Controller/applicationController.php?action=manage"); exit(); }
+
+             $appDetails = $applicationModel->getApplicationById($applicationId);
+             if (!$appDetails) { $_SESSION['error_message'] = "Application not found."; header("Location: ../Controller/applicationController.php?action=manage"); exit(); }
+
+             // Authorization check for Pilote
+             if ($loggedInUserRole === 'pilote' && $appDetails['created_by_pilote_id'] != $loggedInUserId) { $_SESSION['error_message'] = "Unauthorized action."; header("Location: ../Controller/applicationController.php?action=manage"); exit(); }
+
+             // Check CV Path & Security
+             $relativePath = $appDetails['cv'];
+             if (empty($relativePath)) { $_SESSION['error_message'] = "No CV uploaded."; header("Location: ../Controller/applicationController.php?action=manage"); exit(); }
+
+             $baseUploadPath = realpath(__DIR__ . '/../../');
+             $expectedDir = realpath($baseUploadPath . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'cv');
+             $absolutePath = $baseUploadPath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+             $realAbsolutePath = realpath($absolutePath); // Resolve path
+
+              // Enhanced Security Check: ensure real path exists and is inside the expected directory
+             if ($realAbsolutePath === false || strpos($realAbsolutePath, $expectedDir) !== 0 || !is_file($realAbsolutePath)) {
+                 error_log("CV Download Security Fail/Not Found. AppID: $applicationId, AbsPath: $absolutePath, RealPath: " . ($realAbsolutePath ?: 'false') . ", ExpectedDir: $expectedDir");
+                 $_SESSION['error_message'] = "CV file error or access denied.";
+                 header("Location: ../Controller/applicationController.php?action=manage");
+                 exit();
+             }
+
+             // Determine mime type & Download Filename
+              $finfo = finfo_open(FILEINFO_MIME_TYPE); $mimeType = finfo_file($finfo, $realAbsolutePath) ?: 'application/octet-stream'; finfo_close($finfo);
+              $studentId = $appDetails['id_student']; $internshipId = $appDetails['id_internship']; $extension = pathinfo($realAbsolutePath, PATHINFO_EXTENSION);
+              $downloadFilename = "CV_Student{$studentId}_App{$applicationId}.{$extension}";
+
+             // Send file
+             header('Content-Description: File Transfer'); header('Content-Type: ' . $mimeType); header('Content-Disposition: attachment; filename="' . $downloadFilename . '"');
+             header('Expires: 0'); header('Cache-Control: must-revalidate'); header('Pragma: public'); header('Content-Length: ' . filesize($realAbsolutePath));
+             flush(); readfile($realAbsolutePath);
              exit();
+            break;
+
+        default:
+            $_SESSION['error_message'] = "Unknown action requested.";
+            AuthCheck::redirectToRoleDashboard($loggedInUserRole);
+            exit();
     }
 } catch (Exception $e) {
     // Catch any unexpected exceptions
-    error_log("Unhandled Exception in applicationController (Action: $action, UserID: $loggedInUserId): " . $e->getMessage() . "\n" . $e->getTraceAsString());
-
-    $_SESSION['error_message'] = "An critical system error occurred. Please contact support.";
-
-    // Redirect to a safe page, like the student dashboard or offers view
-    if ($loggedInUserRole === 'student') {
-        header("Location: offerController.php?action=view");
-    } else {
-        header("Location: ../View/login.php"); // Fallback redirect
-    }
+    error_log("Unhandled Exception in applicationController (Action: $action, UserID: $loggedInUserId, Role: $loggedInUserRole): " . $e->getMessage() . "\n" . $e->getTraceAsString());
+    $_SESSION['error_message'] = "A critical system error occurred.";
+    AuthCheck::redirectToRoleDashboard($loggedInUserRole);
     exit();
 }
 ?>

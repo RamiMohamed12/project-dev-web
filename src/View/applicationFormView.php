@@ -2,31 +2,62 @@
 // File: src/View/applicationFormView.php
 
 // Assume necessary variables are passed from the controller:
-// $loggedInUserId, $profilePicSrc, $displayName, $displayEmail,
+// $loggedInUserId, $conn (crucial for pic fetch!),
 // $internshipDetails (array), $pageTitle (string),
 // $errorMessage (string), $successMessage (string),
 // $_POST data might be available if form submitted with errors
 
-// Define default paths/values
-$defaultCompanyPic = '../View/images/default_company.png';
-$defaultAvatar = '../View/images/default_avatar.png';
+// --- Define default paths/values ---
+$defaultCompanyPic = '../View/images/default_company.png'; // Relative path
+$defaultAvatar = '../View/images/default_avatar.png';    // Relative path
 
-// Prepare variables for the header/template (provide defaults if not set)
-$userProfilePicSrc = isset($profilePicSrc) ? htmlspecialchars($profilePicSrc) : $defaultAvatar;
-$userName = isset($displayName) ? htmlspecialchars($displayName) : 'Student';
-$userEmail = isset($displayEmail) ? htmlspecialchars($displayEmail) : '';
-$safeLoggedInUserId = isset($loggedInUserId) ? htmlspecialchars((string)$loggedInUserId) : ''; // Ensure it's safe for URLs/forms
+// --- Initialize User Details ---
+$profilePicSrc = null;      // Initialize to null
+$displayName = 'Student';   // Default name
+$displayEmail = '';         // Default email
+
+// --- Fetch User Details for Header ---
+// This block relies on $loggedInUserId and $conn being passed from the controller
+if (isset($loggedInUserId) && isset($conn)) {
+    try {
+        require_once __DIR__ . '/../Model/user.php'; // Ensure User model is loaded
+        $userModel = new User($conn);
+        $userDetails = $userModel->readStudent($loggedInUserId);
+
+        if ($userDetails) {
+            $displayName = htmlspecialchars($userDetails['name'] ?? $displayName);
+            $displayEmail = htmlspecialchars($userDetails['email'] ?? $displayEmail);
+            if (!empty($userDetails['profile_picture_mime']) && !empty($userDetails['profile_picture'])) {
+                 $picData = is_resource($userDetails['profile_picture']) ? stream_get_contents($userDetails['profile_picture']) : $userDetails['profile_picture'];
+                if ($picData) {
+                    // Set the data URI - DO NOT htmlspecialchars the whole thing here
+                    $profilePicSrc = 'data:' . htmlspecialchars($userDetails['profile_picture_mime']) . ';base64,' . base64_encode($picData);
+                }
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Error fetching student details for application form header (ID: $loggedInUserId): " . $e->getMessage());
+        // $profilePicSrc remains null, default path will be used via ??
+    }
+} else {
+     // Log if prerequisites missing
+     if (!isset($loggedInUserId)) error_log("applicationFormView: Missing loggedInUserId for profile pic fetch.");
+     if (!isset($conn)) error_log("applicationFormView: Missing \$conn for profile pic fetch.");
+}
+// --- End Fetch User Details ---
+
+// Prepare other view variables
+$safeLoggedInUserId = isset($loggedInUserId) ? htmlspecialchars((string)$loggedInUserId) : '';
 $pageTitle = isset($pageTitle) ? htmlspecialchars($pageTitle) : 'Apply for Internship';
-
-// Data for the view (handle potential missing keys gracefully)
 $internshipTitle = htmlspecialchars($internshipDetails['title'] ?? 'Internship Offer');
 $companyName = htmlspecialchars($internshipDetails['name_company'] ?? 'N/A');
-$companyLocation = htmlspecialchars($internshipDetails['company_location'] ?? 'N/A');
+$companyLocation = htmlspecialchars($internshipDetails['company_location'] ?? 'N/A'); // Assuming location is available
 $salary = htmlspecialchars($internshipDetails['remuneration'] ?? 'N/A');
-$duration = htmlspecialchars($internshipDetails['duration'] ?? 'N/A');
+// Duration was removed from DB previously, ensure it's not used or add it back if needed
+// $duration = htmlspecialchars($internshipDetails['duration'] ?? 'N/A');
 $internshipId = htmlspecialchars((string)($internshipDetails['id_internship'] ?? ''));
 
-// Company Logo Logic
+// Company Logo Logic (using relative default path)
 $companyLogoSrc = $defaultCompanyPic;
 if (!empty($internshipDetails['company_picture_mime']) && !empty($internshipDetails['company_picture'])) {
     $logoData = is_resource($internshipDetails['company_picture']) ? stream_get_contents($internshipDetails['company_picture']) : $internshipDetails['company_picture'];
@@ -44,236 +75,52 @@ if (!empty($internshipDetails['company_picture_mime']) && !empty($internshipDeta
     <title><?= $pageTitle ?> - Navigui</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../View/css/stud_offre.css">
+    <!-- Use relative path for CSS -->
+    <link rel="stylesheet" href="../View/css/stud_offre.css"> <!-- Assuming this CSS works -->
     <style>
         /* --- Application Form Specific Styles --- */
-
-        /* Enhance Internship Summary */
-        .internship-summary-card {
-            background-color: var(--card-bg-color);
-            border-radius: var(--card-border-radius);
-            padding: 1.5rem 2rem; /* More padding */
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-md); /* Slightly more prominent shadow */
-            border: 1px solid var(--border-color);
-            display: grid; /* Use grid for better layout */
-            grid-template-columns: auto 1fr; /* Logo | Details */
-            gap: 1rem 1.5rem;
-            align-items: center;
-        }
-
-        .internship-summary-card .company-logo-wrapper {
-             grid-row: 1 / span 2; /* Logo spans two rows */
-             width: 70px;
-             height: 70px;
-             border-radius: 50%;
-             overflow: hidden;
-             border: 2px solid var(--border-color-light);
-             display: flex;
-             justify-content: center;
-             align-items: center;
-             background-color: #fff; /* Ensure bg for non-transparent logos */
-        }
-         .internship-summary-card .company-logo-wrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* Use contain to prevent cropping */
-         }
-
-        .internship-summary-card h3 {
-            margin: 0;
-            font-size: 1.5rem; /* Larger title */
-            font-weight: 600;
-            color: var(--text-primary);
-            grid-column: 2; /* Title in second column */
-            align-self: end; /* Align to bottom */
-        }
-
-        .internship-summary-details {
-             grid-column: 2; /* Details in second column */
-             align-self: start; /* Align to top */
-             display: flex;
-             flex-wrap: wrap;
-             gap: 0.5rem 1.5rem; /* Spacing between details */
-             margin-top: 0.25rem;
-             color: var(--text-secondary);
-        }
-
-        .internship-summary-details p {
-            margin: 0;
-            font-size: 0.95rem;
-            display: flex; /* Align icon and text */
-            align-items: center;
-            gap: 0.5rem; /* Space between icon and text */
-        }
-        .internship-summary-details i {
-             color: var(--primary-color); /* Color the icons */
-             width: 1em; /* Consistent icon width */
-             text-align: center;
-        }
-         .internship-summary-details strong { /* No longer needed if using icons */
-             /* display: none; */
-         }
-
-
+        /* Enhanced Internship Summary */
+        .internship-summary-card { background-color: var(--card-bg-color); border-radius: var(--card-border-radius); padding: 1.5rem 2rem; margin-bottom: 2rem; box-shadow: var(--shadow-md); border: 1px solid var(--border-color); display: grid; grid-template-columns: auto 1fr; gap: 1rem 1.5rem; align-items: center; }
+        .internship-summary-card .company-logo-wrapper { grid-row: 1 / span 2; width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 2px solid var(--border-color-light); display: flex; justify-content: center; align-items: center; background-color: #fff; }
+        .internship-summary-card .company-logo-wrapper img { width: 100%; height: 100%; object-fit: contain; }
+        .internship-summary-card h3 { margin: 0; font-size: 1.5rem; font-weight: 600; color: var(--text-primary); grid-column: 2; align-self: end; }
+        .internship-summary-details { grid-column: 2; align-self: start; display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin-top: 0.25rem; color: var(--text-secondary); }
+        .internship-summary-details p { margin: 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; }
+        .internship-summary-details i { color: var(--primary-color); width: 1em; text-align: center; }
         /* Enhanced Form Styling */
-        .application-form-container {
-            background-color: var(--card-bg-color);
-            border-radius: var(--card-border-radius);
-            padding: 2rem;
-            box-shadow: var(--shadow-lg); /* Deeper shadow for focus */
-            border: 1px solid var(--border-color);
-            margin-top: 1rem;
-        }
-        .application-form-container h3 { /* Section titles */
-             font-size: 1.3rem;
-             font-weight: 600;
-             margin-bottom: 1.5rem;
-             padding-bottom: 0.75rem;
-             border-bottom: 1px solid var(--border-color-light);
-             color: var(--text-primary);
-             display: flex;
-             align-items: center;
-             gap: 0.75rem;
-        }
-        .application-form-container h3 i {
-             color: var(--primary-color);
-        }
-
-        .application-form .form-group {
-            margin-bottom: 1.75rem; /* More spacing */
-        }
-
-        .application-form label {
-            display: block;
-            margin-bottom: 0.6rem;
-            font-weight: 500; /* Slightly bolder label */
-            color: var(--text-primary);
-            font-size: 1.05rem; /* Slightly larger label */
-        }
-
-        .application-form input[type="file"],
-        .application-form textarea {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            border: 1px solid var(--input-border-color);
-            border-radius: var(--input-border-radius);
-            background-color: var(--input-bg-color);
-            color: var(--input-text-color);
-            font-size: 1rem;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease; /* Added box-shadow transition */
-        }
-
-        .application-form textarea {
-            min-height: 180px; /* Taller text area */
-            resize: vertical;
-        }
-
-        /* Custom File Input - More Creative */
-        .form-group.file-input-group {
-             position: relative;
-        }
-        .file-input-styled {
-             display: inline-flex; /* Use flex */
-             align-items: center;
-             padding: 0.6rem 1.2rem;
-             background-color: var(--primary-color-light);
-             color: var(--primary-color);
-             border: 1px dashed var(--primary-color);
-             border-radius: var(--input-border-radius);
-             cursor: pointer;
-             transition: background-color 0.2s ease;
-             font-weight: 500;
-        }
-        .file-input-styled i {
-             margin-right: 0.75rem;
-             font-size: 1.1em;
-        }
-        .file-input-styled:hover {
-            background-color: var(--primary-color-lighter);
-        }
-        .file-input-group input[type="file"] {
-             /* Hide the ugly default input but keep it accessible */
-             position: absolute;
-             left: 0;
-             top: 0;
-             width: 100%; /* Make it cover the styled label area for clicking */
-             height: 100%;
-             opacity: 0;
-             cursor: pointer;
-             z-index: 10; /* Make sure it's clickable */
-        }
-         #file-chosen { /* Span to display filename */
-             margin-left: 1rem;
-             font-style: italic;
-             color: var(--text-muted);
-             font-size: 0.9rem;
-         }
-
-
-        .application-form input:focus,
-        .application-form textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px var(--primary-focus-ring); /* Enhanced focus ring */
-        }
-
-        .application-form .form-hint {
-            font-size: 0.9rem; /* Slightly larger hint */
-            color: var(--text-muted);
-            margin-top: 0.5rem;
-        }
-
-        .application-form .form-actions {
-            margin-top: 2.5rem; /* More space before buttons */
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end; /* Align buttons to the right */
-            border-top: 1px solid var(--border-color-light); /* Separator line */
-            padding-top: 1.5rem;
-        }
-
-         .form-actions .btn {
-             padding: 0.8rem 1.8rem; /* Larger buttons */
-             font-size: 1.05rem;
-             font-weight: 500;
-         }
-          .form-actions .btn i {
-              margin-right: 0.5rem;
-          }
-         .form-actions .btn-secondary {
-             background-color: var(--secondary-button-bg);
-             color: var(--secondary-button-text);
-             border: 1px solid var(--secondary-button-border);
-         }
-         .form-actions .btn-secondary:hover {
-             background-color: var(--secondary-button-hover-bg);
-             border-color: var(--secondary-button-hover-border);
-         }
-
-         /* Simple animation for messages */
-        @keyframes fadeInDown {
-             from { opacity: 0; transform: translateY(-10px); }
-             to { opacity: 1; transform: translateY(0); }
-        }
-        .message {
-            animation: fadeInDown 0.3s ease-out;
-        }
-
-        .highlighted-border {
-            border: 2px solid var(--primary-color);
-            padding: 1rem;
-            background-color: var(--highlight-bg-color);
-        }
-
+        .application-form-container { background-color: var(--card-bg-color); border-radius: var(--card-border-radius); padding: 2rem; box-shadow: var(--shadow-lg); border: 1px solid var(--border-color); margin-top: 1rem; }
+        .application-form-container h3 { font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color-light); color: var(--text-primary); display: flex; align-items: center; gap: 0.75rem; }
+        .application-form-container h3 i { color: var(--primary-color); }
+        .application-form .form-group { margin-bottom: 1.75rem; }
+        .application-form label { display: block; margin-bottom: 0.6rem; font-weight: 500; color: var(--text-primary); font-size: 1.05rem; }
+        .application-form input[type="file"], .application-form textarea { width: 100%; padding: 0.8rem 1rem; border: 1px solid var(--input-border-color); border-radius: var(--input-border-radius); background-color: var(--input-bg-color); color: var(--input-text-color); font-size: 1rem; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+        .application-form textarea { min-height: 180px; resize: vertical; }
+        .form-group.file-input-group { position: relative; }
+        .file-input-styled { display: inline-flex; align-items: center; padding: 0.6rem 1.2rem; background-color: var(--primary-color-light); color: var(--primary-color); border: 1px dashed var(--primary-color); border-radius: var(--input-border-radius); cursor: pointer; transition: background-color 0.2s ease; font-weight: 500; }
+        .file-input-styled i { margin-right: 0.75rem; font-size: 1.1em; } .file-input-styled:hover { background-color: var(--primary-color-lighter); }
+        .file-input-group input[type="file"] { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
+        #file-chosen { margin-left: 1rem; font-style: italic; color: var(--text-muted); font-size: 0.9rem; }
+        .application-form input:focus, .application-form textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-focus-ring); }
+        .application-form .form-hint { font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem; }
+        .application-form .form-actions { margin-top: 2.5rem; display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border-color-light); padding-top: 1.5rem; }
+        .form-actions .btn { padding: 0.8rem 1.8rem; font-size: 1.05rem; font-weight: 500; } .form-actions .btn i { margin-right: 0.5rem; }
+        .form-actions .btn-secondary { background-color: var(--secondary-button-bg); color: var(--secondary-button-text); border: 1px solid var(--secondary-button-border); }
+        .form-actions .btn-secondary:hover { background-color: var(--secondary-button-hover-bg); border-color: var(--secondary-button-hover-border); }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .message { animation: fadeInDown 0.3s ease-out; }
+        /* Styles for back link */
+        .back-link { display: inline-block; margin-bottom: 1rem; color: var(--primary-color); text-decoration: none; font-weight: 500; }
+        .back-link:hover { text-decoration: underline; }
+        .back-link i { margin-right: 0.3rem; }
     </style>
 </head>
 <body>
 
-    <!-- Consistent Header from viewOffersView.php -->
+    <!-- Consistent Header -->
     <header class="header">
         <nav class="navbar">
             <div class="nav-container bento-card">
+                <!-- Use relative paths -->
                 <a href="../View/student.php" class="logo">
                     <div class="logo-image-container"><i class="fas fa-graduation-cap"></i></div>
                     <span class="logo-text">Navigui</span>
@@ -282,7 +129,8 @@ if (!empty($internshipDetails['company_picture_mime']) && !empty($internshipDeta
                     <a href="../View/student.php" class="menu-item">Home</a>
                     <a href="../Controller/offerController.php?action=view" class="menu-item">Offers</a>
                     <a href="../Controller/wishlistController.php?action=view" class="menu-item">Wishlist</a>
-                    <a href="../Controller/applicationController.php?action=myapps" class="menu-item active">Applications</a>
+                    <!-- Highlight Applications differently or remove active state here -->
+                    <a href="../Controller/applicationController.php?action=myapps" class="menu-item">Applications</a>
                     <?php if ($safeLoggedInUserId): ?>
                     <a href="../Controller/editUser.php?id=<?= $safeLoggedInUserId ?>&type=student" class="menu-item">Profile</a>
                     <?php endif; ?>
@@ -293,16 +141,18 @@ if (!empty($internshipDetails['company_picture_mime']) && !empty($internshipDeta
                     </label>
                     <?php if ($safeLoggedInUserId): ?>
                     <div class="user-dropdown">
-                        <img src="<?= $userProfilePicSrc ?>" alt="Profile" class="user-avatar">
+                        <!-- Use ?? operator for fallback -->
+                        <img src="<?= $profilePicSrc ?? $defaultAvatar ?>" alt="Profile" class="user-avatar">
                         <div class="dropdown-menu">
                             <div class="dropdown-header">
-                                <img src="<?= $userProfilePicSrc ?>" alt="Profile" class="dropdown-avatar">
+                                <img src="<?= $profilePicSrc ?? $defaultAvatar ?>" alt="Profile" class="dropdown-avatar">
                                 <div class="dropdown-user-info">
-                                    <div class="dropdown-user-name"><?= $userName ?></div>
-                                    <div class="dropdown-user-email"><?= $userEmail ?></div>
+                                    <div class="dropdown-user-name"><?= $displayName /* Already escaped */ ?></div>
+                                    <div class="dropdown-user-email"><?= $displayEmail /* Already escaped */ ?></div>
                                 </div>
                             </div>
                             <div class="dropdown-items">
+                                <!-- Use relative paths -->
                                 <a href="../Controller/editUser.php?id=<?= $safeLoggedInUserId ?>&type=student" class="dropdown-item"><i class="fas fa-user-edit"></i><span>Edit Profile</span></a>
                                 <a href="../Controller/applicationController.php?action=myapps" class="dropdown-item"><i class="fas fa-file-alt"></i><span>My Applications</span></a>
                                 <a href="../Controller/wishlistController.php?action=view" class="dropdown-item"><i class="fas fa-heart"></i><span>My Wishlist</span></a>
@@ -315,11 +165,12 @@ if (!empty($internshipDetails['company_picture_mime']) && !empty($internshipDeta
                 </div>
             </div>
             <div class="mobile-menu" id="mobile-menu">
+                 <!-- Use relative paths -->
                 <div class="mobile-menu-content">
                     <a href="../View/student.php" class="mobile-menu-item">Home</a>
                     <a href="../Controller/offerController.php?action=view" class="mobile-menu-item">Offers</a>
                     <a href="../Controller/wishlistController.php?action=view" class="mobile-menu-item">Wishlist</a>
-                    <a href="../Controller/applicationController.php?action=myapps" class="mobile-menu-item active">Applications</a>
+                    <a href="../Controller/applicationController.php?action=myapps" class="mobile-menu-item">Applications</a>
                     <?php if ($safeLoggedInUserId): ?>
                     <a href="../Controller/editUser.php?id=<?= $safeLoggedInUserId ?>&type=student" class="mobile-menu-item">Profile</a>
                     <?php endif; ?>
@@ -333,16 +184,16 @@ if (!empty($internshipDetails['company_picture_mime']) && !empty($internshipDeta
         <section class="page-header">
             <div class="container">
                 <div class="page-icon">
-                    <i class="fas fa-edit"></i> <!-- Changed icon to reflect editing/filling form -->
+                    <i class="fas fa-paper-plane"></i> <!-- Use apply icon -->
                 </div>
                 <h1 class="page-title"><?= $pageTitle ?></h1>
-                <p class="page-subtitle">Review the details and craft your application. Good luck!</p> <!-- More engaging subtitle -->
+                <p class="page-subtitle">Review the details and submit your application.</p>
             </div>
         </section>
 
         <div class="container">
-             <a href="javascript:history.back()" class="back-link">
-                 <i class="fas fa-chevron-left"></i> Go Back
+             <a href="javascript:history.back()" class="back-link"> <!-- Go Back link -->
+                 <i class="fas fa-chevron-left"></i> Go Back to Offer List
              </a>
 
             <!-- Messages -->
@@ -359,9 +210,9 @@ if (!empty($internshipDetails['company_picture_mime']) && !empty($internshipDeta
                 </div>
             <?php endif; ?>
 
-            <?php if (!empty($internshipDetails)): // Only show form if details are available ?>
+            <?php if (!empty($internshipDetails) && !empty($internshipId)): // Check ID too ?>
 
-                <!-- Internship Summary - Enhanced -->
+                <!-- Internship Summary -->
                 <div class="internship-summary-card">
                      <div class="company-logo-wrapper">
                           <img src="<?= $companyLogoSrc ?>" alt="<?= $companyName ?> Logo" class="company-logo">
@@ -371,7 +222,8 @@ if (!empty($internshipDetails['company_picture_mime']) && !empty($internshipDeta
                         <p><i class="fas fa-building"></i> <?= $companyName ?></p>
                         <p><i class="fas fa-map-marker-alt"></i> <?= $companyLocation ?></p>
                         <p><i class="fas fa-euro-sign"></i> <?= $salary ?> / month</p>
-                        <p><i class="far fa-clock"></i> <?= $duration ?> months</p>
+                        <!-- Duration removed -->
+                        <!-- <p><i class="far fa-clock"></i> <?= $duration ?> months</p> -->
                     </div>
                 </div>
 
@@ -379,40 +231,34 @@ if (!empty($internshipDetails['company_picture_mime']) && !empty($internshipDeta
                 <div class="application-form-container bento-card">
                      <form method="post" action="../Controller/applicationController.php?action=submit" enctype="multipart/form-data" class="application-form">
                         <input type="hidden" name="internship_id" value="<?= $internshipId ?>">
-                        <input type="hidden" name="redirect_success_url" value="../Controller/applicationController.php?action=myapps&success=applied">
-                        <input type="hidden" name="redirect_fail_url" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
+                        <!-- Redirect URLs removed, controller handles redirects -->
 
                          <!-- Section 1: Motivation -->
-                         <h3 class="highlighted-border"><i class="fas fa-pen-fancy"></i> Your Motivation</h3>
-                        <div class="form-group highlighted-border">
+                         <h3><i class="fas fa-pen-fancy"></i> Your Motivation</h3>
+                        <div class="form-group">
                             <label for="motivation_letter">Motivation Letter</label>
-                            <textarea id="motivation_letter" name="motivation_letter" rows="10" required placeholder="Tell <?= $companyName ?> why you're excited about this opportunity and what makes you a great candidate. Mention specific skills or experiences relevant to the role..."><?= htmlspecialchars($_POST['motivation_letter'] ?? '') ?></textarea>
-                            <p class="form-hint">This is your chance to shine! Be genuine and specific.</p>
+                            <textarea id="motivation_letter" name="motivation_letter" rows="10" required placeholder="Tell <?= $companyName ?> why you're excited about this opportunity..."><?= htmlspecialchars($_POST['motivation_letter'] ?? '') ?></textarea>
+                            <p class="form-hint">Explain your interest and suitability for the role.</p>
                         </div>
 
                         <!-- Section 2: CV -->
                          <h3><i class="fas fa-file-alt"></i> Attach Your CV</h3>
                         <div class="form-group file-input-group">
                             <label for="cv_file">Upload CV (PDF, DOC, DOCX - Max 5MB)</label>
-                            <!-- Visually hidden actual input -->
                             <input type="file" id="cv_file" name="cv_file" accept=".pdf,.doc,.docx" aria-hidden="true">
-                             <!-- Styled replacement label acting as button -->
                             <label for="cv_file" class="file-input-styled">
                                <i class="fas fa-upload"></i> Choose File...
                             </label>
-                             <!-- Span to display chosen filename -->
                              <span id="file-chosen">No file chosen</span>
-                            <p class="form-hint">Ensure your CV is up-to-date. If none is uploaded, we will use the one from your profile.</p>
-                            <span id="file-chosen">No file chosen</span>
-                            <p class="form-hint">Ensure your CV is up-to-date. If none is uploaded, your default profile CV might be used (if applicable).</p>
+                            <p class="form-hint">Optional. Ensure your CV is up-to-date.</p>
                         </div>
 
                         <!-- Section 3: Submit -->
                         <div class="form-actions">
-                            <button type="submit" class="btn">
+                            <button type="submit" class="btn btn-primary"> <!-- Changed class to primary -->
                                 <i class="fas fa-paper-plane"></i> Submit Application
                             </button>
-                            <a href="javascript:history.back()" class="btn btn-secondary">
+                            <a href="javascript:history.back()" class="btn btn-secondary"> <!-- Added secondary class -->
                                 <i class="fas fa-times"></i> Cancel
                             </a>
                         </div>
@@ -421,16 +267,18 @@ if (!empty($internshipDetails['company_picture_mime']) && !empty($internshipDeta
             <?php else: ?>
                 <div class="message error-message">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <span>Whoops! We couldn't load the internship details. Please <a href="javascript:history.back()">go back</a> and try again.</span>
+                    <span>Could not load internship details. Please go back to the offers page and try again.</span>
+                    <a href="../Controller/offerController.php?action=view" class="btn btn-sm btn-secondary ms-3">View Offers</a>
                 </div>
-            <?php endif; // End check for internshipDetails ?>
+            <?php endif; ?>
 
         </div> <!-- /.container -->
     </main>
 
     <!-- Consistent Footer -->
     <footer class="footer">
-         <div class="container">
+        <!-- Footer content remains the same -->
+        <div class="container">
             <div class="footer-content">
                 <div class="footer-column">
                     <div class="footer-logo">
@@ -516,9 +364,9 @@ if (!empty($internshipDetails['company_picture_mime']) && !empty($internshipDeta
                     setTimeout(() => {
                         message.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
                         message.style.opacity = '0';
-                        message.style.transform = 'translateY(-20px)'; // Slide up effect
+                        message.style.transform = 'translateY(-20px)';
                         setTimeout(() => { message.style.display = 'none'; }, 500);
-                    }, 5000); // 5 seconds
+                    }, 5000);
                  } else { message.style.display = 'none'; }
             });
 
@@ -540,7 +388,6 @@ if (!empty($internshipDetails['company_picture_mime']) && !empty($internshipDeta
             if (actualFileInput && fileChosenDisplay) {
                 actualFileInput.addEventListener('change', function() {
                     if (this.files && this.files.length > 0) {
-                        // Display the name of the first file selected
                         fileChosenDisplay.textContent = this.files[0].name;
                     } else {
                         fileChosenDisplay.textContent = 'No file chosen';
