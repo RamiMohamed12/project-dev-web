@@ -4,9 +4,12 @@
 class Application {
     private $conn;
     private $error;
+    private $table_name = "application"; // Added table name property for consistency
 
     public function __construct($db) {
         $this->conn = $db;
+        // Optional: Set error mode if not done globally
+        $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
     public function getError() {
@@ -15,31 +18,33 @@ class Application {
 
     /**
      * Create a new application
-     * 
+     *
      * @param int $studentId Student ID
      * @param int $internshipId Internship ID
      * @param string $motivationLetter Motivation letter text
-     * @param string|null $cvPath Path to uploaded CV file (optional)
-     * @param string|null $cvFilename Original filename of CV (optional)
+     * @param string|null $cvPath Path to uploaded CV file (optional) - Assuming this stores the filename/path
      * @return bool Success or failure
      */
-    public function createApplication($studentId, $internshipId, $motivationLetter, $cvPath = null, $cvFilename = null) {
+    public function createApplication($studentId, $internshipId, $motivationLetter, $cvPath = null) {
         try {
-            // If CV path is null, set a default value
-            if ($cvPath === null) {
-                $cvPath = "No CV uploaded";
+            if ($cvPath === null || trim($cvPath) === '') {
+                 $cvPath = null;
             }
-            
-            // Updated column names to match your actual database structure
-            $sql = "INSERT INTO application (id_student, id_internship, cover_letter, cv) 
-                    VALUES (:student_id, :internship_id, :motivation_letter, :cv_path)";
-            
+
+            $sql = "INSERT INTO " . $this->table_name . " (id_student, id_internship, cover_letter, cv, status)
+                    VALUES (:student_id, :internship_id, :motivation_letter, :cv_path, 'pending')";
+
             $stmt = $this->conn->prepare($sql);
             $stmt->bindParam(':student_id', $studentId, PDO::PARAM_INT);
             $stmt->bindParam(':internship_id', $internshipId, PDO::PARAM_INT);
             $stmt->bindParam(':motivation_letter', $motivationLetter, PDO::PARAM_STR);
-            $stmt->bindParam(':cv_path', $cvPath, PDO::PARAM_STR);
-            
+
+            if ($cvPath === null) {
+                 $stmt->bindValue(':cv_path', null, PDO::PARAM_NULL);
+            } else {
+                 $stmt->bindParam(':cv_path', $cvPath, PDO::PARAM_STR);
+            }
+
             return $stmt->execute();
         } catch (PDOException $e) {
             $this->error = "Error creating application: " . $e->getMessage();
@@ -50,21 +55,21 @@ class Application {
 
     /**
      * Check if student has already applied for an internship
-     * 
+     *
      * @param int $studentId Student ID
      * @param int $internshipId Internship ID
      * @return bool True if already applied, false otherwise
      */
     public function hasApplied($studentId, $internshipId) {
         try {
-            $sql = "SELECT COUNT(*) FROM application 
+            $sql = "SELECT COUNT(*) FROM " . $this->table_name . "
                     WHERE id_student = :student_id AND id_internship = :internship_id";
-            
+
             $stmt = $this->conn->prepare($sql);
             $stmt->bindParam(':student_id', $studentId, PDO::PARAM_INT);
             $stmt->bindParam(':internship_id', $internshipId, PDO::PARAM_INT);
             $stmt->execute();
-            
+
             return ($stmt->fetchColumn() > 0);
         } catch (PDOException $e) {
             error_log("Application hasApplied error: " . $e->getMessage());
@@ -73,71 +78,69 @@ class Application {
     }
 
     /**
-     * Get all applications for a student
-     * 
+     * Get all applications for a student, including internship and company details.
+     *
      * @param int $studentId Student ID
-     * @return array List of applications with internship and company details
+     * @return array|false List of applications with merged details, or empty array if none, or false on DB error.
      */
     public function getStudentApplications($studentId) {
         try {
-            // Ajout de logs pour le débogage
-            error_log("Fetching applications for student ID: " . $studentId);
-            
-            // Requête simplifiée pour obtenir les applications
-            $simpleSql = "SELECT * FROM application WHERE id_student = :student_id";
-            $simpleStmt = $this->conn->prepare($simpleSql);
-            $simpleStmt->bindParam(':student_id', $studentId, PDO::PARAM_INT);
-            $simpleStmt->execute();
-            $applications = $simpleStmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            error_log("Found " . count($applications) . " applications");
-            
-            // Si aucune application n'est trouvée, retourner un tableau vide
-            if (empty($applications)) {
-                return [];
-            }
-            
-            // Pour chaque application, récupérer les détails de l'offre et de l'entreprise
-            foreach ($applications as &$app) {
-                // Récupérer les détails de l'offre
-                $internshipSql = "SELECT * FROM internship WHERE id_internship = :id_internship";
-                $internshipStmt = $this->conn->prepare($internshipSql);
-                $internshipStmt->bindParam(':id_internship', $app['id_internship'], PDO::PARAM_INT);
-                $internshipStmt->execute();
-                $internship = $internshipStmt->fetch(PDO::FETCH_ASSOC);
-                
-                if ($internship) {
-                    // Fusionner les détails de l'offre
-                    foreach ($internship as $key => $value) {
-                        if (!isset($app[$key])) {
-                            $app[$key] = $value;
-                        }
-                    }
-                    
-                    // Récupérer les détails de l'entreprise
-                    $companySql = "SELECT * FROM company WHERE id_company = :id_company";
-                    $companyStmt = $this->conn->prepare($companySql);
-                    $companyStmt->bindParam(':id_company', $internship['id_company'], PDO::PARAM_INT);
-                    $companyStmt->execute();
-                    $company = $companyStmt->fetch(PDO::FETCH_ASSOC);
-                    
-                    if ($company) {
-                        // Fusionner les détails de l'entreprise
-                        foreach ($company as $key => $value) {
-                            if (!isset($app[$key])) {
-                                $app[$key] = $value;
-                            }
-                        }
-                    }
-                }
-            }
-            
-            return $applications;
+            // --- MODIFIED SQL QUERY: Removed i.duration ---
+            $sql = "SELECT
+                        app.*,
+                        i.title, i.description AS internship_description,
+                        -- i.duration,  -- <<< REMOVED THIS LINE
+                        i.remuneration, i.offre_date, i.id_company,
+                        c.name_company, c.location AS company_location, c.company_picture, c.company_picture_mime
+                    FROM
+                        " . $this->table_name . " app
+                    JOIN
+                        internship i ON app.id_internship = i.id_internship
+                    JOIN
+                        company c ON i.id_company = c.id_company
+                    WHERE
+                        app.id_student = :student_id
+                    ORDER BY
+                        app.created_at DESC";
+            // --- END MODIFIED SQL QUERY ---
+
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':student_id', $studentId, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $applications; // Returns empty array [] if no rows found
+
         } catch (PDOException $e) {
             $this->error = "Error retrieving applications: " . $e->getMessage();
-            error_log("Application getStudentApplications error: " . $e->getMessage());
-            return [];
+            error_log("Application getStudentApplications error: " . $e->getMessage() . " (SQLSTATE: " . $e->getCode() . ")");
+            return false; // Return false on database error
+        }
+    } 
+    /**
+     * Counts the number of applications submitted for a specific internship.
+     *
+     * @param int $internshipId The ID of the internship.
+     * @return int The number of applications, or 0 on error.
+     */
+    public function countApplicationsForInternship(int $internshipId): int
+    {
+        $query = "SELECT COUNT(*) FROM " . $this->table_name . " WHERE id_internship = :id_internship";
+
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id_internship', $internshipId, PDO::PARAM_INT);
+            $stmt->execute();
+            $count = $stmt->fetchColumn();
+            return (int)$count;
+
+        } catch (PDOException $exception) {
+            error_log("Database error in countApplicationsForInternship (Internship ID: $internshipId): " . $exception->getMessage());
+            return 0;
         }
     }
+
+    // --- Add other Application model methods here as needed ---
+
 }
 ?>

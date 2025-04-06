@@ -15,27 +15,26 @@ if (!isset($loggedInUserRole) || $loggedInUserRole !== 'student') {
 $defaultCompanyPic = '../View/images/default_company.png'; // Default company logo
 $defaultUserPic = '../View/images/default_avatar.png';    // Default user avatar
 
-// --- Fetch User Details for Profile Display (Copied & Adapted) ---
-$userProfilePicSrc = $defaultUserPic; // Start with default
-$userName = 'Student';                // Default name
-$userEmail = '';                      // Default email
+// --- Fetch User Details for Profile Display (Adapted from wishlistView.php logic) ---
+$profilePicSrc = null;              // Start with null, default applied in HTML
+$displayName = 'Student';           // Default name
+$displayEmail = '';                 // Default email
 
 // Check if details are needed (user is logged in) and prerequisites are met (db connection assumed available)
-// This block tries to fetch user details if they weren't explicitly passed by the controller.
 // Ideally, the controller (applicationController.php) should handle fetching and passing this data.
 if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to be passed by controller)
     try {
         // Ensure the User model is included only once
-        if (!class_exists('User')) {
-             require_once __DIR__ . '/../Model/user.php'; // Adjust path if needed
-        }
+        // Use require_once for safety, even if class_exists check is present
+        require_once __DIR__ . '/../Model/user.php'; // Adjust path if needed
+
         $userModel = new User($conn); // Assumes $conn is a valid PDO connection
         $userDetails = $userModel->readStudent($loggedInUserId); // Fetch student data
 
         if ($userDetails) {
             // Assign to the variables used in the HTML header
-            $userName = htmlspecialchars($userDetails['name']);
-            $userEmail = htmlspecialchars($userDetails['email']);
+            $displayName = htmlspecialchars($userDetails['name']);
+            $displayEmail = htmlspecialchars($userDetails['email']);
 
             // Check for profile picture data
             if (!empty($userDetails['profile_picture_mime']) && !empty($userDetails['profile_picture'])) {
@@ -46,19 +45,20 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
 
                 // If picture data is successfully retrieved, create the data URI
                 if ($picData) {
-                    $userProfilePicSrc = 'data:' . htmlspecialchars($userDetails['profile_picture_mime']) .
+                    // Note: htmlspecialchars is applied to the mime type part for safety within the data URI structure
+                    $profilePicSrc = 'data:' . htmlspecialchars($userDetails['profile_picture_mime']) .
                         ';base64,' . base64_encode($picData);
                 }
             }
         }
 
     } catch (Exception $e) {
-        // Log the error, but don't break the page; defaults will be used.
+        // Log the error, but don't break the page; defaults ($profilePicSrc = null, etc.) will be used.
         error_log("Error fetching student details for applications view header (ID: $loggedInUserId): " . $e->getMessage());
-        // Ensure defaults are still set in case of error
-        $userProfilePicSrc = $defaultUserPic;
-        $userName = 'Student';
-        $userEmail = '';
+        // Ensure default name/email are set if fetch failed completely
+        $displayName = 'Student';
+        $displayEmail = '';
+        // $profilePicSrc remains null, handled by '??' in HTML
     }
 }
 // --- End Fetch User Details ---
@@ -110,15 +110,16 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
                     <?php if (isset($loggedInUserId)): ?>
                     <div class="user-dropdown">
                         <?php
-                        // Variables ($userProfilePicSrc, $userName, $userEmail) are now prepared by the PHP block above
+                        // Variables ($profilePicSrc, $displayName, $displayEmail) are now prepared by the PHP block above
+                        // Use null coalescing operator (??) to fall back to the default picture if $profilePicSrc is null
                         ?>
-                        <img src="<?= htmlspecialchars($userProfilePicSrc) ?>" alt="Profile" class="user-avatar">
+                        <img src="<?= $profilePicSrc ?? $defaultUserPic ?>" alt="Profile" class="user-avatar">
                         <div class="dropdown-menu">
                             <div class="dropdown-header">
-                                <img src="<?= htmlspecialchars($userProfilePicSrc) ?>" alt="Profile" class="dropdown-avatar">
+                                <img src="<?= $profilePicSrc ?? $defaultUserPic ?>" alt="Profile" class="dropdown-avatar">
                                 <div class="dropdown-user-info">
-                                    <div class="dropdown-user-name"><?= htmlspecialchars($userName) ?></div>
-                                    <div class="dropdown-user-email"><?= htmlspecialchars($userEmail) ?></div>
+                                    <div class="dropdown-user-name"><?= htmlspecialchars($displayName) ?></div>
+                                    <div class="dropdown-user-email"><?= htmlspecialchars($displayEmail) ?></div>
                                 </div>
                             </div>
                             <div class="dropdown-items">

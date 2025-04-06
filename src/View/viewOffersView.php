@@ -125,6 +125,16 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
        }
        /* --- End FIX --- */
 
+       /* Optional: Style for applicant count */
+       .offer-details .applicant-count {
+            color: var(--text-secondary); /* Or a specific color */
+            font-size: 0.9em;
+       }
+       .offer-details .applicant-count i {
+            margin-right: 4px;
+            color: var(--primary-color); /* Or another icon color */
+       }
+
     </style>
 </head>
 <body>
@@ -231,7 +241,11 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
         </section>
 
         <div class="container">
-                        <!-- Messages -->
+            <a href="../View/student.php" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+
+            <!-- Messages -->
             <?php if (!empty($errorMessage)): ?>
                 <div class="message error-message">
                     <i class="fas fa-exclamation-circle"></i>
@@ -288,11 +302,13 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
                         <?php
                             // Extract rating info passed from controller
                             $ratingInfo = $internship['rating_info'] ?? ['average' => null, 'count' => 0];
-                            $studentHasRated = $internship['student_has_rated'] ?? false; // Default to false if not set
-                            $companyId = $internship['id_company'] ?? null; // Get company ID
-                            $internshipId = $internship['id_internship'] ?? null; // Get internship ID
+                            $studentHasRated = $internship['student_has_rated'] ?? false;
+                            $companyId = $internship['id_company'] ?? null;
+                            $internshipId = $internship['id_internship'] ?? null;
                             $safeInternshipId = $internshipId ? htmlspecialchars((string)$internshipId) : '';
                             $safeCompanyId = $companyId ? htmlspecialchars((string)$companyId) : '';
+                            // Get the applicant count passed from the controller
+                            $applicantCount = $internship['applicant_count'] ?? 0; // Default to 0 if not set
                         ?>
                         <div class="offer-card">
                             <div class="offer-header">
@@ -315,10 +331,10 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
                                 <!-- Company Rating Display -->
                                 <div class="star-rating">
                                     <?php if ($ratingInfo['average'] !== null && is_numeric($ratingInfo['average'])): ?>
-                                        <?= displayStars((float)$ratingInfo['average']) // Call the defined function. Cast to float for safety. ?>
+                                        <?= displayStars((float)$ratingInfo['average']) ?>
                                         <span class="rating-count">(<?= number_format((float)$ratingInfo['average'], 1) ?>/5 from <?= htmlspecialchars((string)($ratingInfo['count'] ?? 0)) ?> review<?= ($ratingInfo['count'] ?? 0) !== 1 ? 's' : '' ?>)</span>
                                     <?php else: ?>
-                                        <?= displayStars(0) // Display 0 stars if no rating ?>
+                                        <?= displayStars(0) ?>
                                         <span class="rating-count">(No reviews yet)</span>
                                     <?php endif; ?>
                                 </div>
@@ -327,6 +343,14 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
                                 <p><strong>Duration:</strong> <span><?= htmlspecialchars($internship['duration'] ?? 'N/A') ?> months</span></p>
                                 <p><strong>Salary:</strong> <span><?= htmlspecialchars($internship['remuneration'] ?? 'N/A') ?> €/month</span></p>
                                 <p><strong>Date Posted:</strong> <span><?= htmlspecialchars(date('M d, Y', strtotime($internship['offre_date'] ?? 'now'))) ?></span></p>
+
+                                <!-- ******* APPLICANT COUNT DISPLAY ******* -->
+                                <p class="applicant-count">
+                                    <i class="fas fa-users"></i> <!-- Optional icon -->
+                                    <span><?= htmlspecialchars((string)$applicantCount) ?> student<?= $applicantCount !== 1 ? 's have' : ' has' ?> applied</span>
+                                </p>
+                                <!-- **************************************** -->
+
                             </div>
 
                             <div class="offer-description">
@@ -341,9 +365,7 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
                                 <?php endif; ?>
 
                                 <?php
-                                // Ensure $wishlistModel is available in the view scope
-                                // It should be passed from the controller or instantiated if necessary
-                                // For this example, assuming $wishlistModel is correctly passed.
+                                // Wishlist button logic
                                 if (isset($wishlistModel) && isset($loggedInUserId) && $internshipId):
                                     $isInWishlist = $wishlistModel->isInWishlist($loggedInUserId, $internshipId);
                                     if ($isInWishlist):
@@ -356,7 +378,7 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
                                         <i class="fas fa-heart"></i> Add to Wishlist
                                     </a>
                                 <?php endif;
-                                      endif; // End check for wishlistModel, loggedInUserId, internshipId ?>
+                                      endif; ?>
                             </div>
 
                             <!-- Rate Company Section -->
@@ -369,11 +391,9 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
                                         <form action="../Controller/companyController.php?action=rate" method="post" class="rating-form">
                                             <input type="hidden" name="company_id" value="<?= $safeCompanyId ?>">
                                             <input type="hidden" name="student_id" value="<?= htmlspecialchars((string)$loggedInUserId) ?>">
-                                             <!-- Add a redirect URL to come back here after rating -->
-                                            <input type="hidden" name="redirect_url" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
+                                            <input type="hidden" name="redirect_url" value="<?= htmlspecialchars($_SESSION['rating_return_url'] ?? $_SERVER['REQUEST_URI']) ?>"> <!-- Use session variable if set -->
 
                                             <div class="star-input">
-                                                <!-- Note: IDs should be unique on the page, using companyId ensures this -->
                                                 <input type="radio" id="star5_<?= $safeCompanyId ?>" name="rating_value" value="5" required><label for="star5_<?= $safeCompanyId ?>"><i class="fas fa-star"></i></label>
                                                 <input type="radio" id="star4_<?= $safeCompanyId ?>" name="rating_value" value="4"><label for="star4_<?= $safeCompanyId ?>"><i class="fas fa-star"></i></label>
                                                 <input type="radio" id="star3_<?= $safeCompanyId ?>" name="rating_value" value="3"><label for="star3_<?= $safeCompanyId ?>"><i class="fas fa-star"></i></label>
@@ -383,18 +403,18 @@ if (isset($loggedInUserId) && isset($conn)) { // Added check for $conn (needs to
 
                                             <textarea name="comment" placeholder="Share your experience with this company (optional)" rows="2"></textarea>
 
-                                            <button type="submit" class="btn btn-small"> <!-- Added btn-small for consistency if needed -->
+                                            <button type="submit" class="btn btn-small">
                                                 <i class="fas fa-paper-plane"></i> Submit Rating
                                             </button>
                                         </form>
                                     <?php endif; ?>
                                 </div>
                             <?php endif; ?>
-                        </div>
+                        </div> <!-- End offer-card -->
                     <?php endforeach; ?>
                 <?php endif; ?>
-            </div>
-        </div>
+            </div> <!-- End offers-container -->
+        </div> <!-- End container -->
     </main>
 
     <footer class="footer">
